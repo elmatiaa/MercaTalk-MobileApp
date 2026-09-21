@@ -1,0 +1,221 @@
+<ion-content [fullscreen]="true">
+  <!-- Cabecera Superior -->
+  <div class="top-header">
+    <div class="logo">
+      <ion-icon name="cart-outline" style="margin-right: 8px; font-size: 24px; color: #0071ce;"></ion-icon> 
+      <strong>MercaTalk</strong>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Selector desplegable de Supermercado -->
+      <div class="supermarket-selector" (click)="toggleSelector()">
+        <img [src]="currentAvatarObj.image" class="mini-avatar">
+        <span>{{ currentAvatarObj.name }}</span>
+        <ion-icon name="chevron-down"></ion-icon>
+      </div>
+
+      <!-- Menú desplegable -->
+      <div class="dropdown-menu" *ngIf="showSelector">
+        <div class="dropdown-header">
+          SUPERMERCADOS
+          <span>Selecciona para cambiar tema y avatar</span>
+        </div>
+        <div class="dropdown-item" *ngFor="let avatar of avatars" (click)="changeAvatar(avatar.id)" [class.selected]="currentAvatarObj.id === avatar.id">
+          <img [src]="avatar.image" class="mini-avatar">
+          <div class="dropdown-text">
+            <strong>{{ avatar.name }}</strong>
+            <span><div class="status-dot-mini" [style.background]="currentAvatarObj.id === avatar.id ? '#2dd36f' : '#ccc'"></div>{{ avatar.name === 'Líder' ? 'Liderín' : (avatar.name === 'Jumbo' ? 'Jumbito' : (avatar.name === 'Santa Isabel' ? 'Santisa' : 'Asistente')) }}</span>
+          </div>
+          <ion-icon name="checkmark-circle" color="primary" *ngIf="currentAvatarObj.id === avatar.id"></ion-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-container">
+    
+    <!-- Tarjeta Principal del Asistente (Oculta por ahora) -->
+    <div class="assistant-card" *ngIf="false">
+      <div class="assistant-info">
+        <div class="avatar-wrapper">
+          <img [src]="currentAvatarObj.image" alt="Avatar" class="avatar-img-small">
+          <div class="status-dot"></div>
+        </div>
+        <div class="assistant-text">
+          <h2>{{ currentAvatarObj.name === 'Líder' ? 'Liderín' : (currentAvatarObj.name === 'Jumbo' ? 'Jumbito' : (currentAvatarObj.name === 'Santa Isabel' ? 'Santisa' : 'Asistente')) }} <span>Asistente oficial de {{ currentAvatarObj.name }}</span></h2>
+          <p>{{ chatMessage }}</p>
+        </div>
+      </div>
+      
+      <button class="chat-btn" (click)="startConversation()">
+        <div style="display:flex; align-items:center;">
+          <ion-icon name="chatbubbles" style="font-size: 32px; margin-right: 15px; opacity: 0.8;"></ion-icon>
+          <div class="btn-text">
+            <strong>Comenzar a conversar</strong>
+            <span>Pregúntame cualquier duda por voz o texto de inmediato</span>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Si estamos en conversación activa (El Chat Mismo) -->
+    <div class="chat-response-section" *ngIf="false">
+      <div class="assistant-card chat-mode-card">
+        <div class="chat-header">
+          <ion-button fill="clear" color="dark" (click)="endConversation()">
+            <ion-icon name="arrow-back" slot="start"></ion-icon> Volver
+          </ion-button>
+          
+          <div class="chat-controls-right">
+            <ion-button fill="clear" size="small" (click)="toggleMute()" [color]="isMuted ? 'medium' : 'primary'">
+              <ion-icon [name]="isMuted ? 'volume-mute' : 'volume-high'" slot="start"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" (click)="repeatVoice()" [disabled]="isSpeaking || isMuted">
+              <ion-icon [name]="isSpeaking ? 'play' : 'reload'" slot="start"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <p class="chat-text">{{ chatMessage }}</p>
+          <div class="typing-indicator" *ngIf="isLoading">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>Escribiendo...</span>
+          </div>
+        </div>
+        
+        <div class="integrated-chat-input" *ngIf="showChatInput">
+          <ion-textarea
+            [(ngModel)]="userMessage"
+            placeholder="Escribe tu mensaje..."
+            rows="1"
+            autoGrow="true"
+            (keyup.enter)="sendMessage()"
+            class="chat-textarea"
+          ></ion-textarea>
+          
+          <ion-button (click)="toggleListening()" [color]="isListening ? 'danger' : 'primary'" class="voice-btn round-btn">
+            <ion-icon [name]="isListening ? 'mic-off' : 'mic'"></ion-icon>
+          </ion-button>
+          
+          <ion-button (click)="sendMessage()" [disabled]="!userMessage.trim() || isLoading" class="send-btn round-btn">
+            <ion-icon name="send"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grilla de Opciones Principales -->
+    <div class="options-grid" *ngIf="!isInConversation">
+      
+      <div class="grid-card" (click)="navigateToPriceCheck()">
+        <div class="icon-wrapper blue">
+          <ion-icon name="barcode-outline"></ion-icon>
+        </div>
+        <div class="card-text">
+          <h3>Consultar Precio</h3>
+          <p>Escanear código de barra o buscar producto</p>
+        </div>
+        <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+      </div>
+      
+      <div class="grid-card" (click)="navigateToStoreLocator()" style="display: none;">
+        <div class="icon-wrapper green">
+          <ion-icon name="map"></ion-icon>
+        </div>
+        <div class="card-text">
+          <h3>Dónde Encontrar</h3>
+          <p>Pasillos y estantes del supermercado</p>
+        </div>
+        <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+      </div>
+      
+      <div class="grid-card" (click)="navigateToOffers()">
+        <div class="icon-wrapper red">
+          <ion-icon name="pricetags"></ion-icon>
+        </div>
+        <div class="card-text">
+          <h3>Ofertas Destacadas</h3>
+          <p>Promociones y descuentos del día</p>
+        </div>
+        <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+      </div>
+      
+      <div class="grid-card" (click)="navigateToRecipes()">
+        <div class="icon-wrapper yellow">
+          <ion-icon name="restaurant"></ion-icon>
+        </div>
+        <div class="card-text">
+          <h3>Recetas con Ofertas</h3>
+          <p>Cocina rico y ahorra con productos en oferta</p>
+        </div>
+        <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+      </div>
+      
+    </div>
+
+    <!-- Herramientas Especiales -->
+    <div class="section-title" *ngIf="!isInConversation">
+      <ion-icon name="menu"></ion-icon> HERRAMIENTAS ESPECIALES
+    </div>
+    
+    <div class="tools-grid" *ngIf="!isInConversation">
+      <div class="tool-card" (click)="navigateToPresupuesto()" style="display: none;">
+        <ion-icon name="calculator" class="tool-icon blue-text"></ion-icon>
+        <div class="tool-content">
+          <h3>Calculadora de Eventos</h3>
+          <p>Calcula porciones para asados, cumpleaños y juntas</p>
+        </div>
+      </div>
+      
+      <div class="tool-card" (click)="navigateToPresupuesto()">
+        <ion-icon name="calculator" class="tool-icon blue-text"></ion-icon>
+        <div class="tool-content">
+          <h3>Hacer presupuesto</h3>
+          <p>Calcula y controla tus gastos mientras compras</p>
+        </div>
+      </div>
+      
+      <div class="tool-card" style="display: none;">
+        <ion-icon name="cube" class="tool-icon yellow-text"></ion-icon>
+        <div class="tool-content">
+          <h3>Reporte de Stock Cruzado</h3>
+          <p>Alertas de bodega cuando la góndola está vacía</p>
+        </div>
+      </div>
+      
+      <div class="tool-card">
+        <ion-icon name="megaphone" class="tool-icon blue-text"></ion-icon>
+        <div class="tool-content">
+          <h3>Sugerencias y Avisos</h3>
+          <p>Canal rápido para reportar derrames o aseo</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Espacio final para que el footer no tape el contenido -->
+    <div style="height: 100px;"></div>
+  </div>
+</ion-content>
+
+<!-- Bottom Tab Bar Simulado (Fijo al fondo) -->
+<div class="custom-tab-bar">
+  <div class="tab-btn active">
+    <ion-icon name="person-circle-outline"></ion-icon>
+    <span>{{ currentAvatarObj.name === 'Líder' ? 'Liderín' : (currentAvatarObj.name === 'Jumbo' ? 'Jumbito' : 'Santisa') }}</span>
+  </div>
+  <!-- Tab Escanear eliminado a petición del usuario -->
+  <div class="tab-btn" (click)="navigateToMisListas()">
+    <ion-icon name="list-outline"></ion-icon>
+    <span>Mis listas</span>
+    <ion-badge color="primary" class="cart-badge">0</ion-badge>
+  </div>
+  <div class="tab-btn" (click)="navigateToOffers()" style="display: none;">
+    <ion-icon name="pricetag-outline"></ion-icon>
+    <span>Ofertas</span>
+  </div>
+  <div class="tab-btn" style="display: none;">
+    <ion-icon name="ellipsis-horizontal"></ion-icon>
+    <span>Más</span>
+  </div>
+</div>

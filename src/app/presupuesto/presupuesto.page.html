@@ -1,0 +1,206 @@
+<ion-header class="ion-no-border" [class.ion-hide]="isScanning">
+  <div class="modern-top-bar">
+    <button class="back-icon-btn" routerLink="/home">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+    </button>
+    <div class="top-bar-title">
+      <h2>Mi Presupuesto</h2>
+      <span>Escáner de productos</span>
+    </div>
+  </div>
+</ion-header>
+
+<!-- Contenido normal (oculto durante el escaneo) -->
+<ion-content class="ion-padding" [class.ion-hide]="isScanning">
+  
+  <ion-card class="budget-setup-card">
+    <ion-card-header>
+      <ion-card-title>Configurar Presupuesto Máximo</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="budget-input-wrapper">
+        <span class="currency-symbol">$</span>
+        <ion-input type="number" [(ngModel)]="budget" (ionChange)="updateChart()" class="large-budget-input"></ion-input>
+      </div>
+      
+      <div class="budget-adjusters">
+        <div class="adjust-row">
+          <ion-button fill="outline" color="danger" size="small" (click)="adjustBudget(-50)">- $50</ion-button>
+          <ion-button fill="outline" color="success" size="small" (click)="adjustBudget(50)">+ $50</ion-button>
+        </div>
+        <div class="adjust-row">
+          <ion-button fill="outline" color="danger" size="small" (click)="adjustBudget(-1000)">- $1.000</ion-button>
+          <ion-button fill="outline" color="success" size="small" (click)="adjustBudget(1000)">+ $1.000</ion-button>
+        </div>
+        <div class="adjust-row">
+          <ion-button fill="outline" color="danger" size="small" (click)="adjustBudget(-10000)">- $10.000</ion-button>
+          <ion-button fill="outline" color="success" size="small" (click)="adjustBudget(10000)">+ $10.000</ion-button>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <div class="chart-container" style="position: relative; height:35vh; width:100%; display: flex; justify-content: center; margin-top: 10px;">
+    <canvas id="budgetChart"></canvas>
+  </div>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-subtitle style="text-align: center; font-size: 1.1em;">
+        Gastado: <strong style="color: #eb445a;">${{ totalSpent }}</strong> | Restante: <strong style="color: #2dd36f;">${{ (budget - totalSpent) > 0 ? (budget - totalSpent) : 0 }}</strong>
+      </ion-card-subtitle>
+    </ion-card-header>
+  </ion-card>
+
+  <div style="display: flex; gap: 10px; margin: 20px 0;">
+    <ion-button expand="block" color="secondary" (click)="startScan()" style="flex: 1; margin: 0;">
+      <ion-icon slot="start" name="barcode-outline"></ion-icon>
+      Escanear
+    </ion-button>
+    <ion-button expand="block" color="tertiary" (click)="addManualProduct()" style="flex: 1; margin: 0;">
+      <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+      Añadir Manual
+    </ion-button>
+  </div>
+
+  <ion-button expand="block" color="success" (click)="saveBudget()" style="margin: 0 0 20px 0;" [disabled]="scannedItems.length === 0">
+    <ion-icon slot="start" name="save-outline"></ion-icon>
+    Guardar Presupuesto
+  </ion-button>
+
+  <ion-list>
+    <ion-list-header>
+      <ion-label>Tus Productos ({{ getTotalItemsCount() }})</ion-label>
+    </ion-list-header>
+    <ion-item *ngFor="let item of scannedItems; let i = index">
+      <ion-label>
+        <h2>{{ item.name }}</h2>
+        <p style="color: var(--primary-color); font-weight: bold;">
+          ${{ (item.inOffer && item.offerPrice ? item.offerPrice : item.price) * (item.quantity || 1) | number }}
+          <span style="font-size: 11px; font-weight: normal; color: #888;">(${{ item.inOffer && item.offerPrice ? item.offerPrice : item.price }} c/u)</span>
+        </p>
+      </ion-label>
+      
+      <div slot="end" class="quantity-controls">
+        <ion-button fill="clear" color="danger" (click)="decreaseQuantity(i)">
+          <ion-icon name="remove-circle-outline"></ion-icon>
+        </ion-button>
+        <span class="quantity-text">{{ item.quantity || 1 }}</span>
+        <ion-button fill="clear" color="success" (click)="increaseQuantity(i)">
+          <ion-icon name="add-circle-outline"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" color="medium" (click)="removeItem(i)">
+          <ion-icon name="trash-outline"></ion-icon>
+        </ion-button>
+      </div>
+    </ion-item>
+  </ion-list>
+
+</ion-content>
+
+<!-- OVERLAY DEL ESCÁNER -->
+<div *ngIf="isScanning" class="scanner-container">
+  <!-- Contenedor para la cámara Web -->
+  <div id="reader" style="width: 100%; max-width: 400px; border-radius: 10px; overflow: hidden; margin-bottom: 20px; z-index: 10000; position: relative;" *ngIf="isWeb"></div>
+
+  <div class="scanner-overlay" *ngIf="!isWeb">
+    <div class="scanner-frame">
+      <div class="scanning-laser"></div>
+      <!-- Esquinas del frame -->
+      <div class="corner top-left"></div>
+      <div class="corner top-right"></div>
+      <div class="corner bottom-left"></div>
+      <div class="corner bottom-right"></div>
+      <div class="scanning-text">Escaneando código de barras...</div>
+    </div>
+  </div>
+
+  <!-- Instrucciones -->
+  <div class="scanner-instructions">
+    <div class="instruction-item">
+      <ion-icon name="videocam-outline"></ion-icon>
+      <span>Enfoca el código de barras dentro del marco</span>
+    </div>
+    <div class="instruction-item">
+      <ion-icon name="sunny-outline"></ion-icon>
+      <span>Asegúrate de tener buena iluminación</span>
+    </div>
+    <div class="instruction-item">
+      <ion-icon name="hand-left-outline"></ion-icon>
+      <span>Mantén el dispositivo estable</span>
+    </div>
+  </div>
+
+  <!-- Controles de la cámara -->
+  <div class="scanner-controls">
+    <ion-button 
+      expand="block" 
+      class="cancel-button"
+      (click)="stopScan()">
+      <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+      Cancelar Escaneo
+    </ion-button>
+  </div>
+</div>
+
+<!-- MODAL AÑADIR MANUALMENTE -->
+<div class="manual-modal-overlay" *ngIf="showManualAddModal">
+  <div class="manual-modal">
+    <div class="modern-top-bar" style="border-radius: 24px 24px 0 0; border-bottom: none; padding-top: 20px;">
+      <button class="back-icon-btn" (click)="closeManualAdd()">
+        <ion-icon name="close"></ion-icon>
+      </button>
+      <div class="top-bar-title">
+        <h2>Añadir Producto</h2>
+        <span>Catálogo o personalizado</span>
+      </div>
+    </div>
+    
+    <ion-segment [(ngModel)]="manualAddTab" class="custom-segment" mode="ios">
+      <ion-segment-button value="db">
+        <ion-label>Catálogo</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="custom">
+        <ion-label>Personalizado</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+    
+    <div class="modal-body" *ngIf="manualAddTab === 'db'">
+      <ion-searchbar [(ngModel)]="searchQuery" placeholder="Buscar en la tienda..."></ion-searchbar>
+      <ion-list class="catalog-list">
+        <ion-item *ngFor="let p of filteredProducts()" (click)="addFromDb(p)" button>
+          <ion-avatar slot="start">
+            <img [src]="p.image || 'assets/icon/favicon.png'" />
+          </ion-avatar>
+          <ion-label>
+            <h2>{{ p.name }}</h2>
+            <p>{{ p.brand }}</p>
+          </ion-label>
+          <ion-note slot="end" color="primary" style="font-weight: bold;">
+            ${{ p.inOffer && p.offerPrice ? p.offerPrice : p.price | number }}
+          </ion-note>
+        </ion-item>
+        <div class="empty-search" *ngIf="filteredProducts().length === 0">
+          No se encontraron productos.
+        </div>
+      </ion-list>
+    </div>
+    
+    <div class="modal-body" *ngIf="manualAddTab === 'custom'">
+      <div class="custom-form">
+        <ion-item>
+          <ion-label position="stacked">Nombre del producto</ion-label>
+          <ion-input [(ngModel)]="customProductName" placeholder="Ej: Manzanas"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Precio total ($)</ion-label>
+          <ion-input type="number" [(ngModel)]="customProductPrice" placeholder="Ej: 1500"></ion-input>
+        </ion-item>
+        <ion-button expand="block" (click)="addCustomProduct()" class="mt-20" [disabled]="!customProductName || !customProductPrice">
+          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+          Añadir Producto
+        </ion-button>
+      </div>
+    </div>
+  </div>
+</div>

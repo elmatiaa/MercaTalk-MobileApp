@@ -1,0 +1,67 @@
+<ion-header class="ion-no-border">
+  <div class="modern-top-bar">
+    <button class="back-icon-btn" (click)="goBack()">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+    </button>
+    <div class="top-bar-title">
+      <h2>Mis Listas</h2>
+      <span>Presupuestos guardados</span>
+    </div>
+  </div>
+</ion-header>
+
+<ion-content class="bg-gray">
+  <div class="list-container">
+    <div class="empty-state" *ngIf="savedBudgets.length === 0">
+      <ion-icon name="list-outline"></ion-icon>
+      <h2>Aún no tienes listas</h2>
+      <p>Escanea productos y guarda tu presupuesto para verlo aquí.</p>
+      
+      <ion-button expand="block" class="primary-btn mt-20" (click)="createNew()">
+        <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+        Crear nueva lista
+      </ion-button>
+    </div>
+
+    <div class="budget-card" *ngFor="let b of savedBudgets; let i = index">
+      <div class="budget-header">
+        <div class="date-badge">
+          {{ b.date | date:'dd/MM/yyyy' }}
+        </div>
+        <ion-badge color="primary">{{ b.items.length }} Productos</ion-badge>
+      </div>
+
+      <div class="budget-body">
+        <div class="amount-row">
+          <span>Presupuesto total:</span>
+          <strong>${{ b.budget | number }}</strong>
+        </div>
+        <div class="amount-row">
+          <span>Gastado ({{ b.items.length }} items):</span>
+          <strong class="spent">${{ b.totalSpent | number }}</strong>
+        </div>
+        
+        <div class="progress-bar">
+          <div class="fill" [style.width.%]="(b.totalSpent / b.budget) * 100"
+               [style.background]="(b.totalSpent / b.budget) > 0.9 ? '#eb445a' : '#2dd36f'"></div>
+        </div>
+      </div>
+
+      <div class="budget-footer">
+        <ion-button fill="clear" color="danger" (click)="deleteBudget(i)">
+          <ion-icon name="trash-outline" slot="start"></ion-icon>
+          Eliminar
+        </ion-button>
+        <ion-button class="edit-btn" fill="solid" color="primary" (click)="editBudget(i)">
+          <ion-icon name="create-outline" slot="start"></ion-icon>
+          Abrir y Editar
+        </ion-button>
+      </div>
+    </div>
+    
+    <ion-button *ngIf="savedBudgets.length > 0" expand="block" class="primary-btn mt-20" (click)="createNew()">
+      <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+      Escanear nueva lista
+    </ion-button>
+  </div>
+</ion-content>

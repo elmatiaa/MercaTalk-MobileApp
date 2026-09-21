@@ -1,0 +1,42 @@
+<ion-header class="ion-no-border">
+  <div class="modern-top-bar">
+    <button class="back-icon-btn" routerLink="/home">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+    </button>
+    <div class="top-bar-title">
+      <h2>Ofertas Especiales</h2>
+      <span>Descubre los mejores precios</span>
+    </div>
+  </div>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="container">
+    <div class="products-grid">
+      @for (offer of offers; track offer.id) {
+        <div class="product-card">
+          <div class="product-image">
+            <img [src]="offer.image" [alt]="offer.product">
+          </div>
+          
+          <div class="product-info">
+            <h3 class="product-title">{{ offer.product }}</h3>
+            
+            <div class="price-section">
+              <span class="current-price">${{ offer.price }}</span>
+              @if (offer.originalPrice > offer.price) {
+                <span class="original-price">${{ offer.originalPrice }}</span>
+                <span class="discount-badge">-{{ offer.discount }}%</span>
+              }
+            </div>
+            
+            <div class="product-details">
+              <span class="category">{{ offer.category }}</span>
+              <span class="valid-until">Válido hasta: {{ offer.validUntil }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</ion-content>

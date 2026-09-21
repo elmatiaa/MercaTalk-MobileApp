@@ -1,0 +1,56 @@
+<ion-header class="ion-no-border">
+  <div class="modern-top-bar">
+    <button class="back-icon-btn" routerLink="/home">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+    </button>
+    <div class="top-bar-title">
+      <h2>Recetas Destacadas</h2>
+      <span>Ideas para cocinar</span>
+    </div>
+  </div>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="container">
+    <!-- Banner explicativo mejorado -->
+    <div class="explanation-banner">
+      <div class="banner-icon">🍳</div>
+      <div class="banner-message">
+        <h2>¡Aprovecha las ofertas del día!</h2>
+        <p>Con estas recetas especiales podrás cocinar delicioso y ahorrar dinero usando los productos en promoción.</p>
+      </div>
+      <div class="banner-arrow"></div>
+    </div>
+
+    <!-- Grid de recetas -->
+    <div class="recipe-grid">
+      @for (recipe of recipes; track recipe.id; let i = $index) {
+        <div class="recipe-card" [class]="'recipe-color-' + (i % 4)">
+          <div class="recipe-image" [style.background-image]="'url(' + recipe.image + ')'"></div>
+          
+          <div class="recipe-content">
+            <div class="recipe-category">Receta Destacada</div>
+            <h2 class="recipe-title">{{ recipe.name }}</h2>
+            
+            <div class="recipe-meta">
+              <span>{{ recipe.time }}</span>
+              <span>{{ recipe.ingredients.length }} INGREDIENTES</span>
+            </div>
+            
+            <div class="recipe-ingredient">
+              <strong>Ingrediente principal:</strong> {{ recipe.mainIngredient }}
+            </div>
+            
+            <p class="recipe-description">
+              {{ recipe.description }}
+            </p>
+            
+            <button class="view-recipe-btn" (click)="viewRecipe(recipe)">
+              Ver Receta
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</ion-content>
