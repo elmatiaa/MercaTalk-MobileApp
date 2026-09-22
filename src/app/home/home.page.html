@@ -7,6 +7,12 @@
     </div>
     
     <div class="header-actions">
+      <!-- Botón Píldora Elegante Modo Pitch -->
+      <button class="top-pitch-pill" (click)="startPitchDemo()" title="Simulación para Inversionistas">
+        <ion-icon name="sparkles"></ion-icon>
+        <span>Demo Pitch</span>
+      </button>
+
       <!-- Selector desplegable de Idioma -->
       <div class="supermarket-selector" (click)="toggleSelector()">
         <img [src]="currentLanguageObj.image" class="flag-icon">
@@ -49,21 +55,6 @@
           <span>Comenzar Compra</span>
           <ion-icon name="chevron-forward" class="cta-arrow"></ion-icon>
         </div>
-      </div>
-    </div>
-
-    <!-- FASE 5: BANNER DEMO PITCH / INVERSIONISTAS -->
-    <div class="pitch-demo-banner" (click)="startPitchDemo()">
-      <div class="pitch-badge">
-        <ion-icon name="sparkles"></ion-icon> MODO PITCH INVERSIONISTAS
-      </div>
-      <div class="pitch-content">
-        <h3>Simulación de Compra en 1-Clic</h3>
-        <p>Carga automáticamente un carro realista con ahorro Smart Switch, descuento Bci y lista de compras para demostraciones comerciales.</p>
-      </div>
-      <div class="pitch-action-row">
-        <span class="pitch-btn-label">Iniciar Demo MercaTalk</span>
-        <ion-icon name="arrow-forward-outline"></ion-icon>
       </div>
     </div>
 
@@ -198,6 +189,14 @@
         <div class="tool-content">
           <h3>Calculadora de Eventos</h3>
           <p>Calcula porciones para asados, cumpleaños y juntas</p>
+        </div>
+      </div>
+      
+      <div class="tool-card pitch-tool" (click)="startPitchDemo()">
+        <ion-icon name="sparkles" class="tool-icon gold-text"></ion-icon>
+        <div class="tool-content">
+          <h3>Modo Demo Pitch</h3>
+          <p>Simulación 1-clic con carro cargado para inversionistas</p>
         </div>
       </div>
       

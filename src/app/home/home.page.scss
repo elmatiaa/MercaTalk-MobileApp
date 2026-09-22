@@ -31,6 +31,36 @@ ion-content {
     font-weight: 800;
     color: #1a1a1a;
   }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .top-pitch-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: #ffc220;
+      border: 1px solid rgba(255, 194, 32, 0.4);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      transition: transform 0.15s ease;
+
+      ion-icon {
+        font-size: 13px;
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+  }
 }
 
 /* SELECTOR DE SUPERMERCADO */
@@ -455,6 +485,12 @@ ion-content {
 
     &.blue-text { color: var(--primary-color); }
     &.yellow-text { color: var(--highlight-color); }
+    &.gold-text { color: #f59e0b; }
+  }
+
+  &.pitch-tool {
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    background: linear-gradient(180deg, #ffffff 0%, #fffbeb 100%);
   }
 
   h3 {
