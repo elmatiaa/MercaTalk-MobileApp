@@ -15,7 +15,8 @@
 
 ## 👥 Integrantes del Equipo
 
-- **Matías** (elmatiaa)
+- **Matías Morales** (elmatiaa)
+- **Eithan Santibañez
 
 ---
 
