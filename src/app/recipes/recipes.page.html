@@ -1,11 +1,11 @@
 <ion-header class="ion-no-border">
   <div class="modern-top-bar">
-    <button class="back-icon-btn" routerLink="/home">
+    <button class="back-icon-btn" routerLink="/home" aria-label="Volver">
       <ion-icon name="arrow-back-outline"></ion-icon>
     </button>
     <div class="top-bar-title">
-      <h2>Recetas Destacadas</h2>
-      <span>Ideas para cocinar</span>
+      <h2>Recetas con Ofertas</h2>
+      <span>Cocina rico y ahorra en tienda</span>
     </div>
   </div>
 </ion-header>
@@ -16,10 +16,9 @@
     <div class="explanation-banner">
       <div class="banner-icon">🍳</div>
       <div class="banner-message">
-        <h2>¡Aprovecha las ofertas del día!</h2>
-        <p>Con estas recetas especiales podrás cocinar delicioso y ahorrar dinero usando los productos en promoción.</p>
+        <h2>¡Cocina y ahorra con ofertas!</h2>
+        <p>Selecciona una receta y añade todos sus ingredientes directamente a tu presupuesto de compra con un solo clic.</p>
       </div>
-      <div class="banner-arrow"></div>
     </div>
 
     <!-- Grid de recetas -->
@@ -29,16 +28,16 @@
           <div class="recipe-image" [style.background-image]="'url(' + recipe.image + ')'"></div>
           
           <div class="recipe-content">
-            <div class="recipe-category">Receta Destacada</div>
+            <div class="recipe-category">Receta Recomendada</div>
             <h2 class="recipe-title">{{ recipe.name }}</h2>
             
             <div class="recipe-meta">
-              <span>{{ recipe.time }}</span>
-              <span>{{ recipe.ingredients.length }} INGREDIENTES</span>
+              <span>⏱️ {{ recipe.time }}</span>
+              <span>🥗 {{ recipe.ingredients.length }} INGREDIENTES</span>
             </div>
             
             <div class="recipe-ingredient">
-              <strong>Ingrediente principal:</strong> {{ recipe.mainIngredient }}
+              <strong>Ingrediente clave:</strong> {{ recipe.mainIngredient }}
             </div>
             
             <p class="recipe-description">
@@ -46,7 +45,7 @@
             </p>
             
             <button class="view-recipe-btn" (click)="viewRecipe(recipe)">
-              Ver Receta
+              Ver Receta e Ingredientes
             </button>
           </div>
         </div>
@@ -54,3 +53,56 @@
     </div>
   </div>
 </ion-content>
+
+<!-- MODAL DETALLE DE RECETA -->
+<div class="recipe-modal-overlay" *ngIf="showRecipeModal && selectedRecipe">
+  <div class="recipe-modal-content">
+    <div class="recipe-modal-header" [style.background-image]="'url(' + selectedRecipe.image + ')'">
+      <div class="header-overlay">
+        <button class="close-modal-btn" (click)="closeRecipeModal()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+        <span class="recipe-modal-cat">{{ selectedRecipe.category }}</span>
+        <h3>{{ selectedRecipe.name }}</h3>
+        <div class="recipe-modal-badges">
+          <span>⏱️ {{ selectedRecipe.time }}</span>
+          <span>Dificultad: {{ selectedRecipe.difficulty }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="recipe-modal-body">
+      <!-- Botón Hero para agregar al carrito -->
+      <button class="add-to-cart-hero-btn" (click)="addIngredientsToBudget(selectedRecipe)">
+        <ion-icon name="cart-outline"></ion-icon>
+        <div class="btn-text">
+          <strong>Añadir {{ selectedRecipe.ingredients.length }} Ingredientes al Presupuesto</strong>
+          <span>Calcula automáticamente el total para tu visita</span>
+        </div>
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+
+      <!-- Lista de Ingredientes -->
+      <div class="recipe-section">
+        <h4><ion-icon name="list-outline"></ion-icon> Ingredientes Necesarios</h4>
+        <div class="ingredients-list">
+          <div class="ingredient-row" *ngFor="let ing of selectedRecipe.ingredients">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <span>{{ ing }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pasos de preparación -->
+      <div class="recipe-section">
+        <h4><ion-icon name="restaurant-outline"></ion-icon> Pasos de Preparación</h4>
+        <div class="steps-list">
+          <div class="step-item" *ngFor="let step of selectedRecipe.steps; let s = index">
+            <span class="step-num">{{ s + 1 }}</span>
+            <p>{{ step }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

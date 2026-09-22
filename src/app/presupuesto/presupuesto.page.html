@@ -7,9 +7,15 @@
       <h2>Presupuesto en Vivo</h2>
       <span>Control inteligente de compra</span>
     </div>
-    <button class="action-icon-btn" (click)="confirmClearCart()" *ngIf="scannedItems.length > 0" title="Vaciar Carrito">
-      <ion-icon name="trash-outline"></ion-icon>
-    </button>
+    <div class="top-bar-actions">
+      <button class="assistant-top-btn" (click)="openAssistantModal()" title="Asistente MercaTalk">
+        <ion-icon name="chatbubbles-outline"></ion-icon>
+        <span>IA</span>
+      </button>
+      <button class="action-icon-btn" (click)="confirmClearCart()" *ngIf="scannedItems.length > 0" title="Vaciar Carrito">
+        <ion-icon name="trash-outline"></ion-icon>
+      </button>
+    </div>
   </div>
 </ion-header>
 
@@ -179,6 +185,18 @@
     </div>
   </div>
 
+  <!-- FASE 3: BOTÓN DE ACCESO AL ASISTENTE DE COMPRA -->
+  <div class="assistant-prompt-bar" (click)="openAssistantModal()">
+    <div class="bot-avatar-ring">
+      <img src="assets/images/liderin.png" onerror="this.src='assets/icon/favicon.png'" alt="Avatar">
+    </div>
+    <div class="bot-prompt-text">
+      <strong>¿Dudas de recetas, pasillos o presupuesto?</strong>
+      <span>Toca aquí para consultar al asistente en vivo</span>
+    </div>
+    <ion-icon name="chatbubbles-outline" class="bubble-icon"></ion-icon>
+  </div>
+
   <!-- SELECTOR DE VISTA DE GRÁFICO (Presupuesto vs Categorías) -->
   <div class="chart-section">
     <div class="chart-header-tabs">
@@ -333,7 +351,7 @@
   </div>
 
   <!-- Espaciador para evitar que la barra flotante tape la lista -->
-  <div style="height: 110px;"></div>
+  <div style="height: 120px;"></div>
 
 </ion-content>
 
@@ -480,6 +498,93 @@
           <ion-icon name="add-circle-outline"></ion-icon> Añadir al Carrito
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- FASE 3: MODAL ASISTENTE VIRTUAL MERCATALK EN EL BOLSILLO -->
+<div class="assistant-modal-overlay" *ngIf="showAssistantModal">
+  <div class="assistant-modal-sheet">
+    <!-- Header del Asistente -->
+    <div class="assistant-sheet-header">
+      <div class="assistant-profile">
+        <div class="assistant-avatar-badge">
+          <img src="assets/images/liderin.png" onerror="this.src='assets/icon/favicon.png'" alt="Avatar">
+          <span class="online-indicator"></span>
+        </div>
+        <div class="assistant-meta">
+          <h3>MercaTalk Bot</h3>
+          <span>Tu copiloto de compras en tienda</span>
+        </div>
+      </div>
+      <div class="assistant-header-actions">
+        <button class="icon-control-btn" (click)="toggleAssistantMute()" [title]="assistantMuted ? 'Activar voz' : 'Silenciar'">
+          <ion-icon [name]="assistantMuted ? 'volume-mute-outline' : 'volume-high-outline'"></ion-icon>
+        </button>
+        <button class="close-sheet-btn" (click)="closeAssistantModal()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chips de Preguntas Rápidas (Un solo toque) -->
+    <div class="quick-prompts-scroll">
+      <button class="prompt-chip" (click)="sendAssistantMessage('¿Qué puedo cocinar con lo que llevo en el carro?')">
+        🍳 ¿Qué cocino con mi carro?
+      </button>
+      <button class="prompt-chip" (click)="sendAssistantMessage('¿Cuánto me queda de presupuesto?')">
+        💰 ¿Cuánto me sobra?
+      </button>
+      <button class="prompt-chip" (click)="sendAssistantMessage('¿En qué pasillo está el arroz?')">
+        📍 ¿Dónde está el arroz?
+      </button>
+      <button class="prompt-chip" (click)="sendAssistantMessage('Sugiéreme un ahorro')">
+        💡 Sugiéreme un ahorro
+      </button>
+    </div>
+
+    <!-- Historial de Conversación -->
+    <div class="assistant-chat-body">
+      <div 
+        class="chat-bubble-row" 
+        *ngFor="let msg of assistantMessages" 
+        [ngClass]="msg.sender">
+        <div class="chat-bubble">
+          <p>{{ msg.text }}</p>
+          <span class="msg-timestamp">{{ msg.time }}</span>
+        </div>
+      </div>
+
+      <div class="chat-bubble-row bot" *ngIf="assistantLoading">
+        <div class="chat-bubble typing">
+          <ion-spinner name="dots"></ion-spinner>
+          <span>MercaTalk está pensando...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Entrada de Mensaje (Voz y Texto) -->
+    <div class="assistant-input-bar">
+      <input 
+        type="text" 
+        [(ngModel)]="assistantInput" 
+        placeholder="Pregúntame algo sobre tu compra..."
+        (keyup.enter)="sendAssistantMessage()"
+        class="assistant-text-field"
+      />
+      <button 
+        class="mic-btn" 
+        [class.listening]="isListening"
+        (click)="toggleVoiceRecognition()" 
+        title="Hablar por voz">
+        <ion-icon [name]="isListening ? 'mic-off-outline' : 'mic-outline'"></ion-icon>
+      </button>
+      <button 
+        class="send-msg-btn" 
+        (click)="sendAssistantMessage()" 
+        [disabled]="!assistantInput.trim() || assistantLoading">
+        <ion-icon name="send-outline"></ion-icon>
+      </button>
     </div>
   </div>
 </div>

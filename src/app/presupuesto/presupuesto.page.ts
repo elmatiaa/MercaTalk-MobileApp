@@ -14,10 +14,14 @@ import {
   cartOutline, checkmarkCircle, alertCircleOutline, refreshOutline,
   sparklesOutline, cardOutline, checkboxOutline, squareOutline,
   leafOutline, swapHorizontalOutline, ribbonOutline, checkmarkDoneOutline,
-  chevronDownOutline, chevronUpOutline
+  chevronDownOutline, chevronUpOutline, chatbubblesOutline, sendOutline,
+  micOutline, micOffOutline, volumeHighOutline, volumeMuteOutline,
+  bulbOutline, compassOutline, sparkles
 } from 'ionicons/icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import { ProductsService, Product } from '../services/products';
+import { ChatService } from '../services/chat.service';
+import { WALMART_RECIPES } from '../data/recipes.data';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 
 Chart.register(...registerables);
@@ -33,6 +37,12 @@ export interface PlannedItem {
   id: string;
   name: string;
   completed: boolean;
+}
+
+export interface ChatMsg {
+  sender: 'bot' | 'user';
+  text: string;
+  time: string;
 }
 
 @Component({
@@ -69,6 +79,16 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   showChecklistDrawer: boolean = false;
   plannedItems: PlannedItem[] = [];
   newPlannedItemText: string = '';
+
+  // FASE 3: Asistente Virtual MercaTalk en el Bolsillo
+  showAssistantModal: boolean = false;
+  assistantMessages: ChatMsg[] = [];
+  assistantInput: string = '';
+  assistantLoading: boolean = false;
+  assistantSpeaking: boolean = false;
+  assistantMuted: boolean = false;
+  isListening: boolean = false;
+  private recognition: any = null;
   
   // Para web
   private html5QrCode: Html5Qrcode | null = null;
@@ -95,6 +115,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private productsService: ProductsService,
+    private chatService: ChatService,
     private toastController: ToastController,
     private alertController: AlertController,
     private route: ActivatedRoute
@@ -130,7 +151,16 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       'ribbon-outline': ribbonOutline,
       'checkmark-done-outline': checkmarkDoneOutline,
       'chevron-down-outline': chevronDownOutline,
-      'chevron-up-outline': chevronUpOutline
+      'chevron-up-outline': chevronUpOutline,
+      'chatbubbles-outline': chatbubblesOutline,
+      'send-outline': sendOutline,
+      'mic-outline': micOutline,
+      'mic-off-outline': micOffOutline,
+      'volume-high-outline': volumeHighOutline,
+      'volume-mute-outline': volumeMuteOutline,
+      'bulb-outline': bulbOutline,
+      'compass-outline': compassOutline,
+      'sparkles': sparkles
     });
     this.isWeb = !Capacitor.isNativePlatform();
   }
@@ -138,6 +168,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.allProducts = this.productsService.getAllProducts();
     this.loadChecklist();
+    this.initSpeechRecognition();
 
     this.route.queryParams.subscribe(params => {
       if (params['index'] !== undefined) {
@@ -163,6 +194,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       this.chart.destroy();
       this.chart = null;
     }
+    this.stopSpeaking();
   }
 
   loadBudget(index: number) {
@@ -195,6 +227,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy() {
     this.stopScan();
+    this.stopSpeaking();
   }
 
   // AUDIO & HAPTIC FEEDBACK
@@ -228,9 +261,9 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       const gain = audioCtx.createGain();
 
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
-      osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16); // G5
+      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16);
       gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
 
@@ -251,7 +284,189 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     } catch (e) {}
   }
 
-  // FASE 2 INNOVACIÓN: SMART SWITCH (Sugerencia de ahorro y cambio en 1 clic)
+  // FASE 3 INNOVACIÓN: ASISTENTE VIRTUAL MERCATALK EN EL BOLSILLO
+  openAssistantModal() {
+    this.showAssistantModal = true;
+    if (this.assistantMessages.length === 0) {
+      const itemCount = this.getTotalItemsCount();
+      const spend = this.getFinalTotalToPay();
+      const welcome = itemCount > 0
+        ? `¡Hola! Veo que llevas ${itemCount} productos en tu carrito por un total de $${spend.toLocaleString('es-CL')}. Puedes preguntarme ideas de recetas con lo que llevas, ubicación de pasillos o cómo optimizar tu presupuesto.`
+        : `¡Hola! Soy tu asistente de compras MercaTalk. A medida que recorras la tienda, pregúntame dudas de precios, pasillos o recetas.`;
+      
+      this.assistantMessages.push({
+        sender: 'bot',
+        text: welcome,
+        time: this.getCurrentTime()
+      });
+      this.speakText(welcome);
+    }
+  }
+
+  closeAssistantModal() {
+    this.showAssistantModal = false;
+    this.stopSpeaking();
+  }
+
+  toggleAssistantMute() {
+    this.assistantMuted = !this.assistantMuted;
+    if (this.assistantMuted) {
+      this.stopSpeaking();
+    }
+  }
+
+  speakText(text: string) {
+    if (this.assistantMuted) return;
+    if ('speechSynthesis' in window) {
+      this.stopSpeaking();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-CL';
+      utterance.rate = 1.05;
+      utterance.onstart = () => { this.assistantSpeaking = true; };
+      utterance.onend = () => { this.assistantSpeaking = false; };
+      utterance.onerror = () => { this.assistantSpeaking = false; };
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  stopSpeaking() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      this.assistantSpeaking = false;
+    }
+  }
+
+  initSpeechRecognition() {
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRec) {
+      this.recognition = new SpeechRec();
+      this.recognition.lang = 'es-CL';
+      this.recognition.continuous = false;
+      this.recognition.interimResults = false;
+
+      this.recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        this.assistantInput = transcript;
+        this.isListening = false;
+        this.sendAssistantMessage();
+      };
+
+      this.recognition.onerror = () => {
+        this.isListening = false;
+      };
+
+      this.recognition.onend = () => {
+        this.isListening = false;
+      };
+    }
+  }
+
+  toggleVoiceRecognition() {
+    if (!this.recognition) {
+      this.presentToast('Reconocimiento de voz no soportado en este navegador.');
+      return;
+    }
+
+    if (this.isListening) {
+      this.recognition.stop();
+      this.isListening = false;
+    } else {
+      this.isListening = true;
+      this.recognition.start();
+    }
+  }
+
+  async sendAssistantMessage(presetText?: string) {
+    const query = (presetText || this.assistantInput).trim();
+    if (!query || this.assistantLoading) return;
+
+    this.assistantMessages.push({
+      sender: 'user',
+      text: query,
+      time: this.getCurrentTime()
+    });
+
+    this.assistantInput = '';
+    this.assistantLoading = true;
+
+    // Procesamiento contextual inteligente de MercaTalk
+    const lower = query.toLowerCase();
+
+    // 1. Pregunta sobre cocinar / recetas con lo que lleva en el carro
+    if (lower.includes('cocinar') || lower.includes('receta') || lower.includes('preparar') || lower.includes('comer')) {
+      const itemsInCart = this.scannedItems.map(i => i.name.toLowerCase());
+      let matchedRecipe = WALMART_RECIPES.find(r => 
+        itemsInCart.some(it => it.includes(r.mainIngredient.toLowerCase().split(' ')[0]))
+      );
+
+      if (!matchedRecipe) {
+        matchedRecipe = WALMART_RECIPES[0];
+      }
+
+      const reply = `Con los productos de tu carrito te sugiero preparar "${matchedRecipe.name}" (${matchedRecipe.time}, dificultad ${matchedRecipe.difficulty}). Ingrediente principal: ${matchedRecipe.mainIngredient}. ¡Te quedará delicioso y ahorrarás dinero!`;
+      this.addBotResponse(reply);
+      return;
+    }
+
+    // 2. Pregunta sobre ubicación de pasillos
+    if (lower.includes('donde') || lower.includes('dónde') || lower.includes('pasillo') || lower.includes('estante') || lower.includes('encuentro')) {
+      const all = this.productsService.getAllProducts();
+      const found = all.find(p => lower.includes(p.name.toLowerCase()) || lower.includes(p.category.toLowerCase()));
+      if (found && found.supermarketLocation) {
+        const reply = `${found.name} se encuentra en el ${found.supermarketLocation.aisle}, sección ${found.supermarketLocation.section}, ${found.supermarketLocation.shelf}.`;
+        this.addBotResponse(reply);
+        return;
+      } else {
+        const reply = `Ese producto generalmente se encuentra en los pasillos centrales (Pasillo 2 Abarrotes o Pasillo 3 Bebidas). Si necesitas ayuda presiona "Llamar personal".`;
+        this.addBotResponse(reply);
+        return;
+      }
+    }
+
+    // 3. Pregunta sobre presupuesto o cuánto le sobra
+    if (lower.includes('cuanto me queda') || lower.includes('cuánto me queda') || lower.includes('presupuesto') || lower.includes('sobra') || lower.includes('falta')) {
+      const remaining = this.budget - this.getFinalTotalToPay();
+      if (remaining >= 0) {
+        const reply = `Llevas gastados $${this.getFinalTotalToPay().toLocaleString('es-CL')} de tus $${this.budget.toLocaleString('es-CL')}. Te quedan disponibles $${remaining.toLocaleString('es-CL')} (${100 - this.getBudgetProgressPercentage()}% de margen).`;
+        this.addBotResponse(reply);
+      } else {
+        const reply = `¡Atención! Has superado tu presupuesto por $${Math.abs(remaining).toLocaleString('es-CL')}. Te recomiendo revisar si puedes sustituir algún producto con Smart Switch para volver al margen.`;
+        this.addBotResponse(reply);
+      }
+      return;
+    }
+
+    // 4. Consulta a API de Literatus / ChatService si está online
+    try {
+      const res = await this.chatService.sendMessage(query, 'brief');
+      if (res && res.reply) {
+        this.addBotResponse(res.reply);
+      } else {
+        this.addBotResponse('Estoy aquí para ayudarte en tu compra. Puedes consultarme por precios, ofertas o ubicaciones de productos.');
+      }
+    } catch (e) {
+      // Fallback local amigable
+      const reply = `Como tu asistente MercaTalk, te recomiendo aprovechar las ofertas destacadas del día en lácteos y abarrotes. ¿Deseas que busquemos algún producto en específico?`;
+      this.addBotResponse(reply);
+    }
+  }
+
+  private addBotResponse(text: string) {
+    this.assistantLoading = false;
+    this.assistantMessages.push({
+      sender: 'bot',
+      text: text,
+      time: this.getCurrentTime()
+    });
+    this.speakText(text);
+  }
+
+  private getCurrentTime(): string {
+    const now = new Date();
+    return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+  }
+
+  // FASE 2 INNOVACIÓN: SMART SWITCH
   getSmartSwitchForProduct(item: any): { alternative: Product; savings: number } | null {
     return this.productsService.getSmartSwitchAlternative(item);
   }
@@ -269,7 +484,6 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     const qty = currentItem.quantity || 1;
     const totalSaving = (oldPrice - newPrice) * qty;
 
-    // Sustituir el ítem en la posición manteniendo la cantidad
     this.scannedItems[index] = {
       ...suggestion.alternative,
       quantity: qty
@@ -283,7 +497,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     this.presentToast(`¡Smart Switch aplicado! Ahorraste $${totalSaving.toLocaleString('es-CL')}`);
   }
 
-  // FASE 2 INNOVACIÓN: CHECKLIST PRE-SUPERMERCADO ("Mi Lista vs Lo que Llevo")
+  // FASE 2 INNOVACIÓN: CHECKLIST PRE-SUPERMERCADO
   loadChecklist() {
     const saved = localStorage.getItem('liderin_planned_checklist');
     if (saved) {
@@ -293,7 +507,6 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
         this.plannedItems = [];
       }
     } else {
-      // Checklist predeterminado sugerido
       this.plannedItems = [
         { id: '1', name: 'Leche', completed: false },
         { id: '2', name: 'Arroz', completed: false },
@@ -331,7 +544,6 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private syncChecklistWithItems() {
-    // Verificar si algún artículo escaneado coincide con la lista planeada
     for (const plan of this.plannedItems) {
       const planNorm = plan.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       const isFound = this.scannedItems.some(item => {
@@ -349,7 +561,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     return this.plannedItems.filter(p => p.completed).length;
   }
 
-  // FASE 2 INNOVACIÓN: DESCUENTOS DE TARJETA Y FIDELIDAD
+  // FASE 2 INNOVACIÓN: DESCUENTOS DE TARJETA
   setCardDiscount(card: 'none' | 'lider_bci' | 'club_lider') {
     this.selectedCardDiscount = card;
     this.updateChart();
@@ -360,8 +572,8 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getDiscountPercentage(): number {
-    if (this.selectedCardDiscount === 'lider_bci') return 6; // 6% Líder Bci
-    if (this.selectedCardDiscount === 'club_lider') return 3; // 3% Club Líder
+    if (this.selectedCardDiscount === 'lider_bci') return 6;
+    if (this.selectedCardDiscount === 'club_lider') return 3;
     return 0;
   }
 
@@ -504,7 +716,6 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       .sort((a, b) => b.total - a.total);
   }
 
-  // FASE 2: Resumen Nutricional y Alérgenos
   getHealthyProductsCount(): number {
     return this.scannedItems.filter(item => !item.seals || item.seals.length === 0).length;
   }
