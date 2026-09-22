@@ -34,6 +34,24 @@
 
   <div class="dashboard-container">
     
+    <!-- Tarjeta Principal: Iniciar Compra en Supermercado (Hero Action) -->
+    <div class="shopping-hero-card" (click)="navigateToPresupuesto()">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span> EN TIENDA
+      </div>
+      <div class="hero-content">
+        <h2>Control de Presupuesto en Vivo</h2>
+        <p>Escanea tus productos con el celular, calcula tu cuenta al instante y evita sorpresas en la caja.</p>
+      </div>
+      <div class="hero-action-footer">
+        <div class="hero-cta-button">
+          <ion-icon name="barcode-outline"></ion-icon>
+          <span>Comenzar Compra</span>
+          <ion-icon name="chevron-forward" class="cta-arrow"></ion-icon>
+        </div>
+      </div>
+    </div>
+
     <!-- Tarjeta Principal del Asistente (Oculta por ahora) -->
     <div class="assistant-card" *ngIf="false">
       <div class="assistant-info">
@@ -202,9 +220,14 @@
 <div class="custom-tab-bar">
   <div class="tab-btn active">
     <ion-icon name="person-circle-outline"></ion-icon>
-    <span>Asistente</span>
+    <span>Inicio</span>
   </div>
-  <!-- Tab Escanear eliminado a petición del usuario -->
+  <div class="tab-btn highlight-tab" (click)="navigateToPresupuesto()">
+    <div class="highlight-circle">
+      <ion-icon name="barcode-outline"></ion-icon>
+    </div>
+    <span>Presupuesto</span>
+  </div>
   <div class="tab-btn" (click)="navigateToMisListas()">
     <ion-icon name="list-outline"></ion-icon>
     <span>Mis listas</span>

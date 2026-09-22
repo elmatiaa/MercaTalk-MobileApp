@@ -1,165 +1,262 @@
 <ion-header class="ion-no-border" [class.ion-hide]="isScanning">
   <div class="modern-top-bar">
-    <button class="back-icon-btn" routerLink="/home">
+    <button class="back-icon-btn" routerLink="/home" aria-label="Volver">
       <ion-icon name="arrow-back-outline"></ion-icon>
     </button>
     <div class="top-bar-title">
-      <h2>Mi Presupuesto</h2>
-      <span>Escáner de productos</span>
+      <h2>Presupuesto en Vivo</h2>
+      <span>Control de gastos en el supermercado</span>
     </div>
+    <button class="action-icon-btn" (click)="confirmClearCart()" *ngIf="scannedItems.length > 0" title="Vaciar Carrito">
+      <ion-icon name="trash-outline"></ion-icon>
+    </button>
   </div>
 </ion-header>
 
-<!-- Contenido normal (oculto durante el escaneo) -->
+<!-- Contenido normal (oculto durante el escaneo de cámara completa) -->
 <ion-content class="ion-padding" [class.ion-hide]="isScanning">
-  
-  <ion-card class="budget-setup-card">
-    <ion-card-header>
-      <ion-card-title>Configurar Presupuesto Máximo</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <div class="budget-input-wrapper">
-        <span class="currency-symbol">$</span>
-        <ion-input type="number" [(ngModel)]="budget" (ionChange)="updateChart()" class="large-budget-input"></ion-input>
-      </div>
-      
-      <div class="budget-adjusters">
-        <div class="adjust-row">
-          <ion-button fill="outline" color="danger" size="small" (click)="adjustBudget(-50)">- $50</ion-button>
-          <ion-button fill="outline" color="success" size="small" (click)="adjustBudget(50)">+ $50</ion-button>
-        </div>
-        <div class="adjust-row">
-          <ion-button fill="outline" color="danger" size="small" (click)="adjustBudget(-1000)">- $1.000</ion-button>
-          <ion-button fill="outline" color="success" size="small" (click)="adjustBudget(1000)">+ $1.000</ion-button>
-        </div>
-        <div class="adjust-row">
-          <ion-button fill="outline" color="danger" size="small" (click)="adjustBudget(-10000)">- $10.000</ion-button>
-          <ion-button fill="outline" color="success" size="small" (click)="adjustBudget(10000)">+ $10.000</ion-button>
-        </div>
-      </div>
-    </ion-card-content>
-  </ion-card>
 
-  <div class="chart-container" style="position: relative; height:35vh; width:100%; display: flex; justify-content: center; margin-top: 10px;">
-    <canvas id="budgetChart"></canvas>
+  <!-- TARJETA CONFIGURAR LÍMITE DE PRESUPUESTO -->
+  <div class="budget-card">
+    <div class="card-header-flex">
+      <span class="card-subtitle">TU PRESUPUESTO OBJETIVO</span>
+      <span class="budget-badge" [ngClass]="getBudgetStatusColor()">
+        {{ getBudgetProgressPercentage() }}% usado
+      </span>
+    </div>
+
+    <div class="budget-display-row">
+      <span class="currency-prefix">$</span>
+      <ion-input 
+        type="number" 
+        [(ngModel)]="budget" 
+        (ionChange)="updateChart()" 
+        class="budget-main-input"
+        placeholder="0">
+      </ion-input>
+    </div>
+
+    <!-- Barra de progreso visual interactiva -->
+    <div class="progress-bar-container">
+      <div 
+        class="progress-bar-fill" 
+        [ngClass]="getBudgetStatusColor()"
+        [style.width.%]="getBudgetProgressPercentage() > 100 ? 100 : getBudgetProgressPercentage()">
+      </div>
+    </div>
+
+    <!-- Botones rápidos de ajuste (+/- $1.000, $5.000, etc.) -->
+    <div class="quick-adjust-row">
+      <button class="pill-btn minus" (click)="adjustBudget(-1000)">- $1.000</button>
+      <button class="pill-btn plus" (click)="adjustBudget(1000)">+ $1.000</button>
+      <button class="pill-btn minus" (click)="adjustBudget(-5000)">- $5.000</button>
+      <button class="pill-btn plus" (click)="adjustBudget(5000)">+ $5.000</button>
+    </div>
+
+    <!-- Alertas de Presupuesto Preventivas -->
+    <div class="budget-alert-box warning" *ngIf="budget > 0 && totalSpent >= (budget * 0.85) && totalSpent <= budget">
+      <ion-icon name="warning-outline"></ion-icon>
+      <span><strong>¡Cuidado!</strong> Te quedan solo <strong>${{ (budget - totalSpent) | number:'1.0-0' }}</strong> para alcanzar tu límite.</span>
+    </div>
+
+    <div class="budget-alert-box danger" *ngIf="budget > 0 && totalSpent > budget">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <span><strong>¡Presupuesto superado!</strong> Estás excedido por <strong>${{ (totalSpent - budget) | number:'1.0-0' }}</strong>.</span>
+    </div>
   </div>
 
-  <ion-card>
-    <ion-card-header>
-      <ion-card-subtitle style="text-align: center; font-size: 1.1em;">
-        Gastado: <strong style="color: #eb445a;">${{ totalSpent }}</strong> | Restante: <strong style="color: #2dd36f;">${{ (budget - totalSpent) > 0 ? (budget - totalSpent) : 0 }}</strong>
-      </ion-card-subtitle>
-    </ion-card-header>
-    <ion-card-content *ngIf="budget > 0 && totalSpent >= (budget * 0.9)">
-      <div class="budget-warning" [class.danger]="totalSpent > budget">
-        <ion-icon name="warning-outline"></ion-icon>
-        <span *ngIf="totalSpent <= budget">¡Atención! Estás al {{ (totalSpent / budget) * 100 | number:'1.0-0' }}% de tu presupuesto.</span>
-        <span *ngIf="totalSpent > budget">¡Has superado tu presupuesto máximo!</span>
-      </div>
-    </ion-card-content>
-  </ion-card>
+  <!-- SELECTOR DE VISTA DE GRÁFICO (Presupuesto vs Categorías) -->
+  <div class="chart-section">
+    <div class="chart-header-tabs">
+      <button 
+        class="chart-tab-btn" 
+        [class.active]="chartMode === 'budget'" 
+        (click)="chartMode = 'budget'; updateChart()">
+        <ion-icon name="pie-chart-outline"></ion-icon> Presupuesto
+      </button>
+      <button 
+        class="chart-tab-btn" 
+        [class.active]="chartMode === 'category'" 
+        (click)="chartMode = 'category'; updateChart()">
+        <ion-icon name="pricetag-outline"></ion-icon> Por Categorías
+      </button>
+    </div>
 
-  <div style="display: flex; gap: 10px; margin: 20px 0;">
-    <ion-button expand="block" color="secondary" (click)="startScan()" style="flex: 1; margin: 0;">
-      <ion-icon slot="start" name="barcode-outline"></ion-icon>
-      Escanear
-    </ion-button>
-    <ion-button expand="block" color="tertiary" (click)="addManualProduct()" style="flex: 1; margin: 0;">
-      <ion-icon slot="start" name="add-circle-outline"></ion-icon>
-      Añadir Manual
-    </ion-button>
+    <div class="chart-wrapper">
+      <canvas id="budgetChart"></canvas>
+    </div>
+
+    <!-- Desglose en pastillas si está en modo categorías -->
+    <div class="category-breakdown-tags" *ngIf="chartMode === 'category'">
+      <div class="cat-pill" *ngFor="let cat of getCategoryBreakdown()" [style.border-left-color]="cat.color">
+        <span class="cat-name">{{ cat.category }}</span>
+        <span class="cat-amount">${{ cat.total | number }} ({{ cat.percentage }}%)</span>
+      </div>
+    </div>
   </div>
 
-  <ion-button expand="block" color="success" (click)="saveBudget()" style="margin: 0 0 20px 0;" [disabled]="scannedItems.length === 0">
-    <ion-icon slot="start" name="save-outline"></ion-icon>
-    Guardar Presupuesto
-  </ion-button>
-
-  <ion-list>
-    <ion-list-header>
-      <ion-label>Tus Productos ({{ getTotalItemsCount() }})</ion-label>
-    </ion-list-header>
-    <ion-item *ngFor="let item of scannedItems; let i = index">
-      <ion-label>
-        <h2>{{ item.name }}</h2>
-        <p style="color: var(--primary-color); font-weight: bold;">
-          ${{ (item.inOffer && item.offerPrice ? item.offerPrice : item.price) * (item.quantity || 1) | number }}
-          <span style="font-size: 11px; font-weight: normal; color: #888;">(${{ item.inOffer && item.offerPrice ? item.offerPrice : item.price }} c/u)</span>
-        </p>
-      </ion-label>
-      
-      <div slot="end" class="quantity-controls">
-        <ion-button fill="clear" color="danger" (click)="decreaseQuantity(i)">
-          <ion-icon name="remove-circle-outline"></ion-icon>
-        </ion-button>
-        <span class="quantity-text">{{ item.quantity || 1 }}</span>
-        <ion-button fill="clear" color="success" (click)="increaseQuantity(i)">
-          <ion-icon name="add-circle-outline"></ion-icon>
-        </ion-button>
-        <ion-button fill="clear" color="medium" (click)="removeItem(i)">
-          <ion-icon name="trash-outline"></ion-icon>
-        </ion-button>
+  <!-- BOTONES PRINCIPALES DE ACCIÓN -->
+  <div class="action-buttons-group">
+    <button class="primary-scan-btn" (click)="startScan()">
+      <ion-icon name="barcode-outline"></ion-icon>
+      <div class="btn-info">
+        <strong>Escanear Productos</strong>
+        <span>{{ continuousScan ? 'Modo continuo activo' : 'Modo uno a uno' }}</span>
       </div>
-    </ion-item>
-  </ion-list>
+      <ion-icon name="flash-outline" class="flash-icon"></ion-icon>
+    </button>
+
+    <div class="secondary-actions-row">
+      <button class="secondary-btn" (click)="addManualProduct()">
+        <ion-icon name="add-circle-outline"></ion-icon> Añadir Manual
+      </button>
+      <button class="secondary-btn save" (click)="saveBudget()" [disabled]="scannedItems.length === 0">
+        <ion-icon name="save-outline"></ion-icon> Guardar Lista
+      </button>
+    </div>
+  </div>
+
+  <!-- LISTADO DE PRODUCTOS EN EL CARRITO -->
+  <div class="items-list-container">
+    <div class="list-section-header">
+      <h3>Productos en Carrito ({{ getTotalItemsCount() }})</h3>
+      <span class="subtotal-indicator">Total: ${{ totalSpent | number }}</span>
+    </div>
+
+    <!-- Estado vacío -->
+    <div class="empty-cart-state" *ngIf="scannedItems.length === 0">
+      <div class="empty-icon-circle">
+        <ion-icon name="cart-outline"></ion-icon>
+      </div>
+      <h4>Tu carrito está vacío</h4>
+      <p>Escanea el código de barras de cualquier producto en el supermercado para comenzar a sumar tu cuenta.</p>
+      <button class="empty-cta-btn" (click)="startScan()">
+        <ion-icon name="barcode-outline"></ion-icon> Probar Escáner
+      </button>
+    </div>
+
+    <!-- Items escaneados -->
+    <div class="product-item-card" *ngFor="let item of scannedItems; let i = index">
+      <div class="product-image-box">
+        <img [src]="item.image || 'assets/icon/favicon.png'" [alt]="item.name" onerror="this.src='assets/icon/favicon.png'">
+        <span class="offer-tag" *ngIf="item.inOffer">Oferta</span>
+      </div>
+
+      <div class="product-details">
+        <div class="product-title-row">
+          <h4>{{ item.name }}</h4>
+          <button class="item-delete-btn" (click)="removeItem(i)" aria-label="Eliminar">
+            <ion-icon name="close"></ion-icon>
+          </button>
+        </div>
+        <div class="product-meta">
+          <span class="category-chip">{{ item.category || 'Abarrotes' }}</span>
+          <span class="brand-text">{{ item.brand }}</span>
+        </div>
+        <div class="pricing-and-controls">
+          <div class="price-box">
+            <span class="unit-price">${{ (item.inOffer && item.offerPrice ? item.offerPrice : item.price) | number }} c/u</span>
+            <span class="total-item-price">${{ ((item.inOffer && item.offerPrice ? item.offerPrice : item.price) * (item.quantity || 1)) | number }}</span>
+          </div>
+          
+          <div class="stepper-controls">
+            <button class="step-btn minus" (click)="decreaseQuantity(i)" aria-label="Disminuir">
+              <ion-icon name="remove-circle-outline"></ion-icon>
+            </button>
+            <span class="step-count">{{ item.quantity || 1 }}</span>
+            <button class="step-btn plus" (click)="increaseQuantity(i)" aria-label="Aumentar">
+              <ion-icon name="add-circle-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Espaciador para evitar que la barra flotante tape la lista -->
+  <div style="height: 110px;"></div>
 
 </ion-content>
 
-<!-- OVERLAY DEL ESCÁNER -->
-<div *ngIf="isScanning" class="scanner-container">
-  <!-- Contenedor para la cámara Web -->
-  <div id="reader" style="width: 100%; max-width: 400px; border-radius: 10px; overflow: hidden; margin-bottom: 20px; z-index: 10000; position: relative;" *ngIf="isWeb"></div>
+<!-- BARRA FLOTANTE FIJA INFERIOR (STICKY BUDGET HUD) -->
+<div class="sticky-budget-hud" [class.ion-hide]="isScanning" *ngIf="scannedItems.length > 0">
+  <div class="hud-left">
+    <div class="hud-label">TOTAL ACUMULADO</div>
+    <div class="hud-total">${{ totalSpent | number }}</div>
+    <div class="hud-subtext" [ngClass]="getBudgetStatusColor()">
+      <span *ngIf="totalSpent <= budget">Te quedan ${{ (budget - totalSpent) | number }}</span>
+      <span *ngIf="totalSpent > budget">¡Excedido por ${{ (totalSpent - budget) | number }}!</span>
+    </div>
+  </div>
 
+  <div class="hud-actions">
+    <button class="hud-scan-btn" (click)="startScan()" aria-label="Escanear">
+      <ion-icon name="barcode-outline"></ion-icon>
+      <span>Escanear</span>
+    </button>
+  </div>
+</div>
+
+<!-- OVERLAY DEL ESCÁNER DE CÁMARA (COMPLETO) -->
+<div *ngIf="isScanning" class="scanner-container">
+  
+  <!-- Banner flotante de feedback en vivo (Modo continuo) -->
+  <div class="live-scan-hud-banner" *ngIf="lastScannedProduct">
+    <ion-icon name="checkmark-circle" class="success-icon"></ion-icon>
+    <div class="hud-product-info">
+      <strong>+1 {{ lastScannedProduct.name }}</strong>
+      <span>${{ lastScannedProduct.price | number }} {{ lastScannedProduct.inOffer ? '(En Oferta)' : '' }}</span>
+    </div>
+    <div class="hud-cart-quick-total">
+      Carro: ${{ totalSpent | number }}
+    </div>
+  </div>
+
+  <!-- Contenedor para cámara Web -->
+  <div id="reader" *ngIf="isWeb" class="web-scanner-box"></div>
+
+  <!-- Visor Nativo -->
   <div class="scanner-overlay" *ngIf="!isWeb">
     <div class="scanner-frame">
       <div class="scanning-laser"></div>
-      <!-- Esquinas del frame -->
       <div class="corner top-left"></div>
       <div class="corner top-right"></div>
       <div class="corner bottom-left"></div>
       <div class="corner bottom-right"></div>
-      <div class="scanning-text">Escaneando código de barras...</div>
+      <div class="scanning-text">Apunta al código de barras</div>
     </div>
   </div>
 
-  <!-- Instrucciones -->
-  <div class="scanner-instructions">
-    <div class="instruction-item">
-      <ion-icon name="videocam-outline"></ion-icon>
-      <span>Enfoca el código de barras dentro del marco</span>
+  <!-- Panel de control flotante del escáner -->
+  <div class="scanner-floating-panel">
+    <!-- Toggle Modo Continuo -->
+    <div class="scan-mode-toggle" (click)="toggleContinuousScan()">
+      <ion-icon [name]="continuousScan ? 'repeat-outline' : 'flash-outline'"></ion-icon>
+      <span>{{ continuousScan ? 'Modo Continuo (Múltiples compras)' : 'Modo Simple (1 producto)' }}</span>
     </div>
-    <div class="instruction-item">
-      <ion-icon name="sunny-outline"></ion-icon>
-      <span>Asegúrate de tener buena iluminación</span>
-    </div>
-    <div class="instruction-item">
-      <ion-icon name="hand-left-outline"></ion-icon>
-      <span>Mantén el dispositivo estable</span>
-    </div>
-  </div>
 
-  <!-- Controles de la cámara -->
-  <div class="scanner-controls">
-    <ion-button 
-      expand="block" 
-      class="cancel-button"
-      (click)="stopScan()">
-      <ion-icon name="close-circle-outline" slot="start"></ion-icon>
-      Cancelar Escaneo
-    </ion-button>
+    <!-- Indicador de total acumulado mientras escaneas -->
+    <div class="scanner-cart-preview">
+      <span>{{ getTotalItemsCount() }} productos en carro</span>
+      <strong>Total: ${{ totalSpent | number }}</strong>
+    </div>
+
+    <button class="finish-scanning-btn" (click)="stopScan()">
+      <ion-icon name="checkmark-circle"></ion-icon> Listo, volver al carrito
+    </button>
   </div>
 </div>
 
 <!-- MODAL AÑADIR MANUALMENTE -->
 <div class="manual-modal-overlay" *ngIf="showManualAddModal">
   <div class="manual-modal">
-    <div class="modern-top-bar" style="border-radius: 24px 24px 0 0; border-bottom: none; padding-top: 20px;">
+    <div class="modern-top-bar" style="border-radius: 24px 24px 0 0; padding-top: 15px;">
       <button class="back-icon-btn" (click)="closeManualAdd()">
         <ion-icon name="close"></ion-icon>
       </button>
       <div class="top-bar-title">
         <h2>Añadir Producto</h2>
-        <span>Catálogo o personalizado</span>
+        <span>Catálogo de tienda o personalizado</span>
       </div>
     </div>
     
@@ -168,45 +265,59 @@
         <ion-label>Catálogo</ion-label>
       </ion-segment-button>
       <ion-segment-button value="custom">
-        <ion-label>Personalizado</ion-label>
+        <ion-label>Manual</ion-label>
       </ion-segment-button>
     </ion-segment>
     
     <div class="modal-body" *ngIf="manualAddTab === 'db'">
-      <ion-searchbar [(ngModel)]="searchQuery" placeholder="Buscar en la tienda..."></ion-searchbar>
+      <ion-searchbar [(ngModel)]="searchQuery" placeholder="Buscar por nombre, marca o categoría..."></ion-searchbar>
       <ion-list class="catalog-list">
         <ion-item *ngFor="let p of filteredProducts()" (click)="addFromDb(p)" button>
           <ion-avatar slot="start">
-            <img [src]="p.image || 'assets/icon/favicon.png'" />
+            <img [src]="p.image || 'assets/icon/favicon.png'" onerror="this.src='assets/icon/favicon.png'"/>
           </ion-avatar>
           <ion-label>
             <h2>{{ p.name }}</h2>
-            <p>{{ p.brand }}</p>
+            <p>{{ p.brand }} • {{ p.category }}</p>
           </ion-label>
-          <ion-note slot="end" color="primary" style="font-weight: bold;">
-            ${{ p.inOffer && p.offerPrice ? p.offerPrice : p.price | number }}
+          <ion-note slot="end" color="primary" style="font-weight: bold; font-size: 15px;">
+            ${{ (p.inOffer && p.offerPrice ? p.offerPrice : p.price) | number }}
           </ion-note>
         </ion-item>
         <div class="empty-search" *ngIf="filteredProducts().length === 0">
-          No se encontraron productos.
+          No se encontraron productos coincidentes.
         </div>
       </ion-list>
     </div>
     
     <div class="modal-body" *ngIf="manualAddTab === 'custom'">
       <div class="custom-form">
-        <ion-item>
+        <ion-item class="form-item">
           <ion-label position="stacked">Nombre del producto</ion-label>
-          <ion-input [(ngModel)]="customProductName" placeholder="Ej: Manzanas"></ion-input>
+          <ion-input [(ngModel)]="customProductName" placeholder="Ej: Kilo de Palta Hass"></ion-input>
         </ion-item>
-        <ion-item>
+        
+        <ion-item class="form-item">
           <ion-label position="stacked">Precio total ($)</ion-label>
-          <ion-input type="number" [(ngModel)]="customProductPrice" placeholder="Ej: 1500"></ion-input>
+          <ion-input type="number" [(ngModel)]="customProductPrice" placeholder="Ej: 3990"></ion-input>
         </ion-item>
-        <ion-button expand="block" (click)="addCustomProduct()" class="mt-20" [disabled]="!customProductName || !customProductPrice">
-          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
-          Añadir Producto
-        </ion-button>
+
+        <ion-item class="form-item">
+          <ion-label position="stacked">Categoría</ion-label>
+          <ion-select [(ngModel)]="customProductCategory" interface="popover">
+            <ion-select-option value="Lácteos">Lácteos</ion-select-option>
+            <ion-select-option value="Abarrotes">Abarrotes</ion-select-option>
+            <ion-select-option value="Carnes">Carnes</ion-select-option>
+            <ion-select-option value="Panadería">Panadería</ion-select-option>
+            <ion-select-option value="Bebidas">Bebidas</ion-select-option>
+            <ion-select-option value="Limpieza">Limpieza</ion-select-option>
+            <ion-select-option value="Otros">Otros</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <button class="submit-custom-btn" (click)="addCustomProduct()" [disabled]="!customProductName || !customProductPrice">
+          <ion-icon name="add-circle-outline"></ion-icon> Añadir al Carrito
+        </button>
       </div>
     </div>
   </div>

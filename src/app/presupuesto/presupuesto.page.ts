@@ -6,12 +6,25 @@ import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { Capacitor } from '@capacitor/core';
 import { Chart, registerables } from 'chart.js';
 import { addIcons } from 'ionicons';
-import { barcodeOutline, close, closeCircle, saveOutline, arrowBackOutline, videocamOutline, sunnyOutline, handLeftOutline, closeCircleOutline, addCircleOutline, removeCircleOutline, trashOutline, warningOutline } from 'ionicons/icons';
+import { 
+  barcodeOutline, close, closeCircle, saveOutline, arrowBackOutline, 
+  videocamOutline, sunnyOutline, handLeftOutline, closeCircleOutline, 
+  addCircleOutline, removeCircleOutline, trashOutline, warningOutline,
+  repeatOutline, flashOutline, pieChartOutline, pricetagOutline,
+  cartOutline, checkmarkCircle, alertCircleOutline, refreshOutline
+} from 'ionicons/icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import { ProductsService, Product } from '../services/products';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 
 Chart.register(...registerables);
+
+export interface CategorySummary {
+  category: string;
+  total: number;
+  percentage: number;
+  color: string;
+}
 
 @Component({
   selector: 'app-presupuesto',
@@ -21,13 +34,23 @@ Chart.register(...registerables);
   imports: [IonicModule, CommonModule, FormsModule, RouterModule]
 })
 export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
-  budget: number = 10000;
+  budget: number = 15000;
   totalSpent: number = 0;
   scannedItems: any[] = [];
   chart: any;
   isScanning: boolean = false;
   isWeb: boolean = false;
   editIndex?: number;
+
+  // Modo de escaneo continuo
+  continuousScan: boolean = true;
+  lastScannedProduct: { name: string; price: number; inOffer?: boolean; offerPrice?: number; quantity: number } | null = null;
+  private lastScannedCode: string = '';
+  private lastScannedTime: number = 0;
+  private bannerTimeout: any = null;
+  
+  // Vista de gráficos: presupuesto vs categorías
+  chartMode: 'budget' | 'category' = 'budget';
   
   // Para web
   private html5QrCode: Html5Qrcode | null = null;
@@ -37,7 +60,19 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   searchQuery = '';
   customProductName = '';
   customProductPrice: number | null = null;
+  customProductCategory = 'Abarrotes';
   allProducts: Product[] = [];
+
+  readonly categoryColors: { [cat: string]: string } = {
+    'Lácteos': '#3880ff',
+    'Panadería': '#ffc409',
+    'Abarrotes': '#2dd36f',
+    'Bebidas': '#222428',
+    'Carnes': '#eb445a',
+    'Limpieza': '#0cd1e8',
+    'Snacks': '#7044ff',
+    'Otros': '#92949c'
+  };
 
   constructor(
     private productsService: ProductsService,
@@ -58,7 +93,15 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       'add-circle-outline': addCircleOutline,
       'remove-circle-outline': removeCircleOutline,
       'trash-outline': trashOutline,
-      'warning-outline': warningOutline
+      'warning-outline': warningOutline,
+      'repeat-outline': repeatOutline,
+      'flash-outline': flashOutline,
+      'pie-chart-outline': pieChartOutline,
+      'pricetag-outline': pricetagOutline,
+      'cart-outline': cartOutline,
+      'checkmark-circle': checkmarkCircle,
+      'alert-circle-outline': alertCircleOutline,
+      'refresh-outline': refreshOutline
     });
     this.isWeb = !Capacitor.isNativePlatform();
   }
@@ -74,17 +117,14 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ionViewDidEnter() {
-    // Angular router may recreate the canvas DOM element when returning to this page.
-    // If we have an old chart instance, destroy it so it binds to the new canvas.
     if (this.chart) {
       this.chart.destroy();
       this.chart = null;
     }
     
-    // Add a tiny delay to ensure the view is fully rendered before getting the canvas
     setTimeout(() => {
       this.initChart();
-    }, 50);
+    }, 80);
   }
 
   ionViewWillLeave() {
@@ -111,7 +151,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   adjustBudget(amount: number) {
     if (!this.budget) this.budget = 0;
     this.budget += amount;
-    if (this.budget < 0) this.budget = 0; // Prevent negative budget
+    if (this.budget < 0) this.budget = 0;
     this.updateChart();
   }
 
@@ -123,46 +163,175 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     this.stopScan();
   }
 
+  // AUDIO & HAPTIC FEEDBACK
+  playBeepSound() {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const audioCtx = new AudioContextClass();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1760, audioCtx.currentTime); // Beep nítido
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    } catch (e) {
+      // AudioContext bloqueado o no disponible
+    }
+  }
+
+  async triggerHaptic() {
+    try {
+      if (Capacitor.isPluginAvailable('Haptics')) {
+        const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+        await Haptics.impact({ style: ImpactStyle.Medium });
+      }
+    } catch (e) {}
+  }
+
+  // CHART LOGIC
   initChart() {
     const canvas = document.getElementById('budgetChart') as HTMLCanvasElement;
     if (!canvas) return;
 
+    const chartConfig = this.getChartConfig();
+
     this.chart = new Chart(canvas, {
       type: 'doughnut',
-      data: {
-        labels: ['Gastado', 'Restante'],
-        datasets: [{
-          data: [this.totalSpent, Math.max(0, this.budget - this.totalSpent)],
-          backgroundColor: ['#eb445a', '#2dd36f'],
-          hoverBackgroundColor: ['#ff4961', '#38ff7e']
-        }]
-      },
+      data: chartConfig.data,
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
           legend: {
             position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 12,
+              font: { size: 12 }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const label = context.label || '';
+                const value = context.parsed || 0;
+                return ` ${label}: $${value.toLocaleString('es-CL')}`;
+              }
+            }
           }
         }
       }
     });
   }
 
+  toggleChartMode() {
+    this.chartMode = this.chartMode === 'budget' ? 'category' : 'budget';
+    this.updateChart();
+  }
+
+  private getChartConfig() {
+    if (this.chartMode === 'budget') {
+      const remaining = Math.max(0, this.budget - this.totalSpent);
+      const isOver = this.totalSpent > this.budget;
+      return {
+        data: {
+          labels: isOver ? ['Gastado', 'Excedido'] : ['Gastado', 'Disponible'],
+          datasets: [{
+            data: isOver ? [this.budget, this.totalSpent - this.budget] : [this.totalSpent, remaining],
+            backgroundColor: isOver ? ['#ff7a00', '#eb445a'] : ['#3880ff', '#2dd36f'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        }
+      };
+    } else {
+      const breakdown = this.getCategoryBreakdown();
+      if (breakdown.length === 0) {
+        return {
+          data: {
+            labels: ['Sin compras'],
+            datasets: [{
+              data: [1],
+              backgroundColor: ['#e0e0e0'],
+              borderWidth: 1
+            }]
+          }
+        };
+      }
+      return {
+        data: {
+          labels: breakdown.map(b => b.category),
+          datasets: [{
+            data: breakdown.map(b => b.total),
+            backgroundColor: breakdown.map(b => b.color),
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        }
+      };
+    }
+  }
+
   updateChart() {
     if (this.chart) {
-      this.chart.data.datasets[0].data = [this.totalSpent, Math.max(0, this.budget - this.totalSpent)];
+      const config = this.getChartConfig();
+      this.chart.data.labels = config.data.labels;
+      this.chart.data.datasets = config.data.datasets;
       this.chart.update();
     }
   }
 
-  // MODAL LOGIC
+  // MÉTRICAS Y CÁLCULOS
+  getBudgetProgressPercentage(): number {
+    if (!this.budget || this.budget <= 0) return 0;
+    return Math.round((this.totalSpent / this.budget) * 100);
+  }
+
+  getBudgetStatusColor(): string {
+    const pct = this.getBudgetProgressPercentage();
+    if (pct > 100) return 'danger';
+    if (pct >= 85) return 'warning';
+    if (pct >= 65) return 'tertiary';
+    return 'success';
+  }
+
+  getCategoryBreakdown(): CategorySummary[] {
+    if (this.totalSpent <= 0 || this.scannedItems.length === 0) return [];
+    const map = new Map<string, number>();
+
+    for (const item of this.scannedItems) {
+      const cat = item.category || 'Otros';
+      const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
+      const itemTotal = price * (item.quantity || 1);
+      map.set(cat, (map.get(cat) || 0) + itemTotal);
+    }
+
+    return Array.from(map.entries())
+      .map(([category, total]) => ({
+        category,
+        total,
+        percentage: Math.round((total / this.totalSpent) * 100),
+        color: this.categoryColors[category] || this.categoryColors['Otros']
+      }))
+      .sort((a, b) => b.total - a.total);
+  }
+
+  // MODAL AÑADIR MANUAL
   addManualProduct() {
     this.showManualAddModal = true;
     this.manualAddTab = 'db';
     this.searchQuery = '';
     this.customProductName = '';
     this.customProductPrice = null;
+    this.customProductCategory = 'Abarrotes';
   }
 
   closeManualAdd() {
@@ -172,31 +341,41 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   filteredProducts() {
     if (!this.searchQuery.trim()) return this.allProducts;
     const query = this.searchQuery.toLowerCase();
-    return this.allProducts.filter(p => p.name.toLowerCase().includes(query) || p.brand.toLowerCase().includes(query));
+    return this.allProducts.filter(p => 
+      p.name.toLowerCase().includes(query) || 
+      p.brand.toLowerCase().includes(query) ||
+      p.category.toLowerCase().includes(query)
+    );
   }
 
   addFromDb(product: Product) {
+    this.playBeepSound();
+    this.triggerHaptic();
+
     const existingIndex = this.scannedItems.findIndex(item => item.barcode === product.barcode);
     if (existingIndex !== -1) {
       this.increaseQuantity(existingIndex);
-      this.presentToast(`¡Cantidad aumentada para ${this.scannedItems[existingIndex].name}!`);
+      this.presentToast(`+1 ${this.scannedItems[existingIndex].name}`);
     } else {
       const newProduct = { ...product, quantity: 1 };
       this.scannedItems.unshift(newProduct);
       this.totalSpent += (product.inOffer && product.offerPrice) ? product.offerPrice : product.price;
       this.updateChart();
-      this.presentToast(`¡Añadido ${product.name}!`);
+      this.presentToast(`Añadido: ${product.name}`);
     }
     this.closeManualAdd();
   }
 
   addCustomProduct() {
     if (this.customProductName && this.customProductPrice) {
+      this.playBeepSound();
+      this.triggerHaptic();
+
       const newItem: any = {
         id: Date.now(),
         name: this.customProductName,
         brand: 'Manual',
-        category: 'Otros',
+        category: this.customProductCategory || 'Otros',
         image: '',
         barcode: 'MANUAL-' + Date.now(),
         price: Number(this.customProductPrice),
@@ -205,41 +384,51 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       this.scannedItems.unshift(newItem);
       this.totalSpent += newItem.price;
       this.updateChart();
-      this.presentToast(`¡Añadido ${newItem.name}!`);
+      this.presentToast(`Añadido: ${newItem.name}`);
       this.closeManualAdd();
     }
   }
 
+  // ESCÁNER
   async startScan() {
     this.isScanning = true;
+    this.lastScannedCode = '';
+    this.lastScannedProduct = null;
     document.body.classList.add('scanner-active');
 
     if (this.isWeb) {
-      // USAR HTML5-QRCODE PARA LA WEB
-      setTimeout(() => { // Esperar a que el div#reader se renderice
+      setTimeout(() => {
         this.html5QrCode = new Html5Qrcode("reader");
         this.html5QrCode.start(
           { facingMode: "environment" },
           {
-            fps: 10,
-            qrbox: { width: 250, height: 150 }
+            fps: 12,
+            qrbox: { width: 260, height: 160 }
           },
-          (decodedText, decodedResult) => {
-            // Se encontró un código
+          (decodedText) => {
+            const now = Date.now();
+            // Debounce de 1.4s para evitar lecturas duplicadas seguidas del mismo código
+            if (decodedText === this.lastScannedCode && (now - this.lastScannedTime) < 1400) {
+              return;
+            }
+            this.lastScannedCode = decodedText;
+            this.lastScannedTime = now;
+
             this.processBarcode(decodedText);
-            this.stopScan();
+
+            if (!this.continuousScan) {
+              this.stopScan();
+            }
           },
-          (errorMessage) => {
-            // Ignorar errores de "código no encontrado en el frame"
-          }
+          () => {}
         ).catch(err => {
           console.error("Error al iniciar cámara web", err);
-          this.presentToast("Error al iniciar cámara web: " + err);
+          this.presentToast("Error al iniciar cámara: " + err);
+          this.stopScan();
         });
-      }, 300);
+      }, 250);
 
     } else {
-      // USAR PLUGUIN NATIVO PARA CELULARES
       try {
         const status = await BarcodeScanner.checkPermission({ force: true });
         
@@ -271,9 +460,9 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     }
     
     this.isScanning = false;
+    this.lastScannedProduct = null;
     document.body.classList.remove('scanner-active');
 
-    // Fix Chart.js disappearing after display:none
     setTimeout(() => {
       if (this.chart) {
         this.chart.destroy();
@@ -283,34 +472,37 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     }, 100);
   }
 
+  toggleContinuousScan() {
+    this.continuousScan = !this.continuousScan;
+  }
+
   async processBarcode(code: string) {
+    this.playBeepSound();
+    this.triggerHaptic();
+
     const product = this.productsService.findProductByBarcode(code);
-    
-    // Check if it exists in scanned items
     const existingIndex = this.scannedItems.findIndex(item => item.barcode === code);
 
     if (existingIndex !== -1) {
       this.increaseQuantity(existingIndex);
-      this.presentToast(`¡Cantidad aumentada para ${this.scannedItems[existingIndex].name}!`);
+      const item = this.scannedItems[existingIndex];
+      this.showLiveScanBanner(item.name, item.inOffer && item.offerPrice ? item.offerPrice : item.price, item.quantity, item.inOffer);
       return;
     }
     
     if (product) {
-      // Producto encontrado en la base de datos
       const newProduct = { ...product, quantity: 1 };
       this.scannedItems.unshift(newProduct);
-      this.totalSpent += (product.inOffer && product.offerPrice) ? product.offerPrice : product.price;
+      const effectivePrice = (product.inOffer && product.offerPrice) ? product.offerPrice : product.price;
+      this.totalSpent += effectivePrice;
       this.updateChart();
-      this.presentToast(`¡Añadido ${product.name}!`);
+      this.showLiveScanBanner(product.name, effectivePrice, 1, product.inOffer);
     } else {
-      // Producto no encontrado, simular uno
-      this.presentToast(`Código ${code} no reconocido. Añadiendo producto genérico.`);
       const mockPrice = Math.floor(Math.random() * 2500) + 500;
-      
       const newItem: any = {
         id: Date.now(),
-        name: 'Producto Desconocido',
-        brand: 'Líder',
+        name: 'Producto ' + code.slice(-4),
+        brand: 'Genérico',
         category: 'Otros',
         image: '',
         code: code,
@@ -322,10 +514,19 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       this.scannedItems.unshift(newItem);
       this.totalSpent += newItem.price;
       this.updateChart();
+      this.showLiveScanBanner(newItem.name, newItem.price, 1);
     }
   }
 
-  getTotalItemsCount() {
+  private showLiveScanBanner(name: string, price: number, quantity: number, inOffer?: boolean) {
+    this.lastScannedProduct = { name, price, quantity, inOffer };
+    if (this.bannerTimeout) clearTimeout(this.bannerTimeout);
+    this.bannerTimeout = setTimeout(() => {
+      this.lastScannedProduct = null;
+    }, 2500);
+  }
+
+  getTotalItemsCount(): number {
     return this.scannedItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
   }
 
@@ -362,12 +563,35 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     this.updateChart();
   }
 
+  async confirmClearCart() {
+    if (this.scannedItems.length === 0) return;
+    const alert = await this.alertController.create({
+      header: 'Vaciar Carrito',
+      message: '¿Estás seguro de que deseas eliminar todos los productos del presupuesto actual?',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { 
+          text: 'Vaciar', 
+          role: 'destructive',
+          handler: () => {
+            this.scannedItems = [];
+            this.totalSpent = 0;
+            this.updateChart();
+            this.presentToast('Carrito vaciado');
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
   async presentToast(message: string) {
     const toast = await this.toastController.create({
       message: message,
-      duration: 2500,
+      duration: 2000,
       position: 'bottom',
-      color: 'dark'
+      color: 'dark',
+      cssClass: 'custom-toast-notification'
     });
     toast.present();
   }
@@ -380,14 +604,12 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       items: this.scannedItems
     };
 
-    // Obtenemos presupuestos guardados anteriores
     const previousSaved = localStorage.getItem('liderin_budgets');
     let budgetsArray = [];
     if (previousSaved) {
       budgetsArray = JSON.parse(previousSaved);
     }
 
-    // Añadimos o actualizamos el presupuesto
     if (this.editIndex !== undefined && this.editIndex !== null) {
       budgetsArray[this.editIndex] = savedData;
     } else {
@@ -395,16 +617,12 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     }
     localStorage.setItem('liderin_budgets', JSON.stringify(budgetsArray));
 
-    // Mostrar alerta de confirmación
     const alert = await this.alertController.create({
       header: '¡Presupuesto Guardado!',
-      message: 'Tu lista y presupuesto han sido guardados en tu historial.',
+      message: `Se ha guardado tu lista con ${this.getTotalItemsCount()} productos y un total de $${this.totalSpent.toLocaleString('es-CL')}.`,
       buttons: ['OK']
     });
 
     await alert.present();
-
-    // Limpiar el presupuesto actual para uno nuevo (opcional, aquí solo informaremos)
-    this.presentToast('Tus productos han sido respaldados.');
   }
 }
