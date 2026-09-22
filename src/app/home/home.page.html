@@ -7,26 +7,26 @@
     </div>
     
     <div class="header-actions">
-      <!-- Selector desplegable de Supermercado -->
+      <!-- Selector desplegable de Idioma -->
       <div class="supermarket-selector" (click)="toggleSelector()">
-        <img [src]="currentAvatarObj.image" class="mini-avatar">
-        <span>{{ currentAvatarObj.name }}</span>
+        <img [src]="currentLanguageObj.image" class="flag-icon">
+        <span>{{ currentLanguageObj.name }}</span>
         <ion-icon name="chevron-down"></ion-icon>
       </div>
 
       <!-- Menú desplegable -->
       <div class="dropdown-menu" *ngIf="showSelector">
         <div class="dropdown-header">
-          SUPERMERCADOS
-          <span>Selecciona para cambiar tema y avatar</span>
+          IDIOMA
+          <span>Selecciona tu idioma preferido</span>
         </div>
-        <div class="dropdown-item" *ngFor="let avatar of avatars" (click)="changeAvatar(avatar.id)" [class.selected]="currentAvatarObj.id === avatar.id">
-          <img [src]="avatar.image" class="mini-avatar">
+        <div class="dropdown-item" *ngFor="let lang of languages" (click)="changeLanguage(lang.id)" [class.selected]="currentLanguageObj.id === lang.id">
+          <img [src]="lang.image" class="flag-icon">
           <div class="dropdown-text">
-            <strong>{{ avatar.name }}</strong>
-            <span><div class="status-dot-mini" [style.background]="currentAvatarObj.id === avatar.id ? '#2dd36f' : '#ccc'"></div>{{ avatar.name === 'Líder' ? 'Liderín' : (avatar.name === 'Jumbo' ? 'Jumbito' : (avatar.name === 'Santa Isabel' ? 'Santisa' : 'Asistente')) }}</span>
+            <strong>{{ lang.name }}</strong>
+            <span><div class="status-dot-mini" [style.background]="currentLanguageObj.id === lang.id ? '#2dd36f' : '#ccc'"></div>{{ lang.id === 'es' ? 'Español (CL)' : (lang.id === 'en' ? 'English (US)' : 'Português (BR)') }}</span>
           </div>
-          <ion-icon name="checkmark-circle" color="primary" *ngIf="currentAvatarObj.id === avatar.id"></ion-icon>
+          <ion-icon name="checkmark-circle" color="primary" *ngIf="currentLanguageObj.id === lang.id"></ion-icon>
         </div>
       </div>
     </div>
@@ -38,11 +38,11 @@
     <div class="assistant-card" *ngIf="false">
       <div class="assistant-info">
         <div class="avatar-wrapper">
-          <img [src]="currentAvatarObj.image" alt="Avatar" class="avatar-img-small">
+          <img [src]="currentLanguageObj.image" alt="Avatar" class="avatar-img-small">
           <div class="status-dot"></div>
         </div>
         <div class="assistant-text">
-          <h2>{{ currentAvatarObj.name === 'Líder' ? 'Liderín' : (currentAvatarObj.name === 'Jumbo' ? 'Jumbito' : (currentAvatarObj.name === 'Santa Isabel' ? 'Santisa' : 'Asistente')) }} <span>Asistente oficial de {{ currentAvatarObj.name }}</span></h2>
+          <h2>MercaTalk <span>Asistente en {{ currentLanguageObj.name }}</span></h2>
           <p>{{ chatMessage }}</p>
         </div>
       </div>
@@ -202,13 +202,13 @@
 <div class="custom-tab-bar">
   <div class="tab-btn active">
     <ion-icon name="person-circle-outline"></ion-icon>
-    <span>{{ currentAvatarObj.name === 'Líder' ? 'Liderín' : (currentAvatarObj.name === 'Jumbo' ? 'Jumbito' : 'Santisa') }}</span>
+    <span>Asistente</span>
   </div>
   <!-- Tab Escanear eliminado a petición del usuario -->
   <div class="tab-btn" (click)="navigateToMisListas()">
     <ion-icon name="list-outline"></ion-icon>
     <span>Mis listas</span>
-    <ion-badge color="primary" class="cart-badge">0</ion-badge>
+    <ion-badge color="primary" class="cart-badge" *ngIf="savedListsCount > 0">{{ savedListsCount }}</ion-badge>
   </div>
   <div class="tab-btn" (click)="navigateToOffers()" style="display: none;">
     <ion-icon name="pricetag-outline"></ion-icon>

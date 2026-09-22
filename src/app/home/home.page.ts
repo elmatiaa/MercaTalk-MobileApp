@@ -38,44 +38,29 @@ import { OffersService, Offer } from '../services/offers.service';
   ]
 })
 export class HomePage implements OnInit, OnDestroy {
-  avatars = [
+  languages = [
     {
-      id: 'lider',
-      name: 'Líder',
-      image: 'assets/images/liderin.png',
-      slogan: 'Precios bajos siempre',
-      greeting: '¡Hola! Soy Liderín, tu asistente virtual del Supermercado Líder. ¿En qué puedo ayudarte hoy?',
-      icon: 'sparkles'
+      id: 'es',
+      name: 'Español',
+      image: 'https://flagcdn.com/w40/cl.png',
+      greeting: '¡Hola! ¿En qué puedo ayudarte hoy?'
     },
     {
-      id: 'unimarc',
-      name: 'Unimarc',
-      image: 'assets/images/unimarc.png',
-      slogan: 'El súper de Chile',
-      greeting: '¡Hola! Bienvenido a Unimarc, el súper de Chile. ¿Qué te llevas hoy?',
-      icon: 'cart'
+      id: 'en',
+      name: 'English',
+      image: 'https://flagcdn.com/w40/us.png',
+      greeting: 'Hello! How can I help you today?'
     },
     {
-      id: 'tottus',
-      name: 'Tottus',
-      image: 'assets/images/tottus.png',
-      slogan: 'Paga menos, vive mejor',
-      greeting: '¡Hola! Soy tu asistente de Tottus. Paga menos, vive mejor. ¿Qué buscas?',
-      icon: 'bag-check'
-    },
-    {
-      id: 'jumbo',
-      name: 'Jumbo',
-      image: 'assets/images/jumbo.png',
-      slogan: 'Jumbo te da más',
-      greeting: '¡Hola! Bienvenido a Jumbo. Jumbo te da más. ¿En qué puedo asesorarte?',
-      icon: 'star'
+      id: 'pt',
+      name: 'Português',
+      image: 'https://flagcdn.com/w40/br.png',
+      greeting: 'Olá! Como posso te ajudar hoje?'
     }
   ];
 
-  currentAvatarObj = this.avatars[0];
-  currentAvatar = this.currentAvatarObj.image;
-  chatMessage = this.currentAvatarObj.greeting;
+  currentLanguageObj = this.languages[0];
+  chatMessage = this.currentLanguageObj.greeting;
   showChatInput = false;
   showSelector = false;
 
@@ -136,8 +121,24 @@ export class HomePage implements OnInit, OnDestroy {
     });
   }
 
+  savedListsCount = 0;
+
   ngOnInit() {
     this.checkSpeechSupport();
+  }
+
+  ionViewDidEnter() {
+    this.loadSavedListsCount();
+  }
+
+  loadSavedListsCount() {
+    const previousSaved = localStorage.getItem('liderin_budgets');
+    if (previousSaved) {
+      const budgetsArray = JSON.parse(previousSaved);
+      this.savedListsCount = budgetsArray.length;
+    } else {
+      this.savedListsCount = 0;
+    }
   }
 
   ngOnDestroy() {
@@ -325,7 +326,7 @@ export class HomePage implements OnInit, OnDestroy {
     // Mensaje de bienvenida con voz opcional (solo si no está silenciado)
     setTimeout(() => {
       if (!this.isMuted) {
-        this.speakText(`¡Hola! Soy de ${this.currentAvatarObj.name}. ¿En qué puedo ayudarte hoy? Puedes escribirme o usar el micrófono para hablar conmigo.`);
+        this.speakText(this.currentLanguageObj.greeting);
       }
     }, 500);
   }
@@ -336,7 +337,7 @@ export class HomePage implements OnInit, OnDestroy {
     this.userMessage = '';
     this.stopSpeaking();
     // Restaurar mensaje inicial
-    this.chatMessage = this.currentAvatarObj.greeting;
+    this.chatMessage = this.currentLanguageObj.greeting;
   }
 
   // BOTÓN PARA REPETIR VOZ (actualizado con mute)
@@ -351,11 +352,10 @@ export class HomePage implements OnInit, OnDestroy {
     this.showSelector = !this.showSelector;
   }
 
-  changeAvatar(avatarId: string) {
-    const selected = this.avatars.find(a => a.id === avatarId);
+  changeLanguage(languageId: string) {
+    const selected = this.languages.find(l => l.id === languageId);
     if (selected) {
-      this.currentAvatarObj = selected;
-      this.currentAvatar = selected.image;
+      this.currentLanguageObj = selected;
       if (!this.isInConversation) {
         this.chatMessage = selected.greeting;
       }

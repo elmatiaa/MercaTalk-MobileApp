@@ -50,6 +50,13 @@
         Gastado: <strong style="color: #eb445a;">${{ totalSpent }}</strong> | Restante: <strong style="color: #2dd36f;">${{ (budget - totalSpent) > 0 ? (budget - totalSpent) : 0 }}</strong>
       </ion-card-subtitle>
     </ion-card-header>
+    <ion-card-content *ngIf="budget > 0 && totalSpent >= (budget * 0.9)">
+      <div class="budget-warning" [class.danger]="totalSpent > budget">
+        <ion-icon name="warning-outline"></ion-icon>
+        <span *ngIf="totalSpent <= budget">¡Atención! Estás al {{ (totalSpent / budget) * 100 | number:'1.0-0' }}% de tu presupuesto.</span>
+        <span *ngIf="totalSpent > budget">¡Has superado tu presupuesto máximo!</span>
+      </div>
+    </ion-card-content>
   </ion-card>
 
   <div style="display: flex; gap: 10px; margin: 20px 0;">

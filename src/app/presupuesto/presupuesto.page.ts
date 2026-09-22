@@ -6,7 +6,7 @@ import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { Capacitor } from '@capacitor/core';
 import { Chart, registerables } from 'chart.js';
 import { addIcons } from 'ionicons';
-import { barcodeOutline, close, closeCircle, saveOutline, arrowBackOutline, videocamOutline, sunnyOutline, handLeftOutline, closeCircleOutline, addCircleOutline, removeCircleOutline, trashOutline } from 'ionicons/icons';
+import { barcodeOutline, close, closeCircle, saveOutline, arrowBackOutline, videocamOutline, sunnyOutline, handLeftOutline, closeCircleOutline, addCircleOutline, removeCircleOutline, trashOutline, warningOutline } from 'ionicons/icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import { ProductsService, Product } from '../services/products';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -57,7 +57,8 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       'close-circle-outline': closeCircleOutline,
       'add-circle-outline': addCircleOutline,
       'remove-circle-outline': removeCircleOutline,
-      'trash-outline': trashOutline
+      'trash-outline': trashOutline,
+      'warning-outline': warningOutline
     });
     this.isWeb = !Capacitor.isNativePlatform();
   }
@@ -73,10 +74,23 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ionViewDidEnter() {
-    if (!this.chart) {
+    // Angular router may recreate the canvas DOM element when returning to this page.
+    // If we have an old chart instance, destroy it so it binds to the new canvas.
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
+    
+    // Add a tiny delay to ensure the view is fully rendered before getting the canvas
+    setTimeout(() => {
       this.initChart();
-    } else {
-      this.updateChart();
+    }, 50);
+  }
+
+  ionViewWillLeave() {
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
     }
   }
 
