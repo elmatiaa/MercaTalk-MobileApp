@@ -11,7 +11,10 @@ import {
   videocamOutline, sunnyOutline, handLeftOutline, closeCircleOutline, 
   addCircleOutline, removeCircleOutline, trashOutline, warningOutline,
   repeatOutline, flashOutline, pieChartOutline, pricetagOutline,
-  cartOutline, checkmarkCircle, alertCircleOutline, refreshOutline
+  cartOutline, checkmarkCircle, alertCircleOutline, refreshOutline,
+  sparklesOutline, cardOutline, checkboxOutline, squareOutline,
+  leafOutline, swapHorizontalOutline, ribbonOutline, checkmarkDoneOutline,
+  chevronDownOutline, chevronUpOutline
 } from 'ionicons/icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import { ProductsService, Product } from '../services/products';
@@ -26,6 +29,12 @@ export interface CategorySummary {
   color: string;
 }
 
+export interface PlannedItem {
+  id: string;
+  name: string;
+  completed: boolean;
+}
+
 @Component({
   selector: 'app-presupuesto',
   templateUrl: './presupuesto.page.html',
@@ -36,6 +45,7 @@ export interface CategorySummary {
 export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   budget: number = 15000;
   totalSpent: number = 0;
+  totalSavingsAccumulated: number = 0;
   scannedItems: any[] = [];
   chart: any;
   isScanning: boolean = false;
@@ -51,6 +61,14 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   
   // Vista de gráficos: presupuesto vs categorías
   chartMode: 'budget' | 'category' = 'budget';
+
+  // FASE 2: Descuento por Tarjeta / Fidelidad
+  selectedCardDiscount: 'none' | 'lider_bci' | 'club_lider' = 'none';
+
+  // FASE 2: Checklist Interactivo ("Mi Lista vs Lo que Llevo")
+  showChecklistDrawer: boolean = false;
+  plannedItems: PlannedItem[] = [];
+  newPlannedItemText: string = '';
   
   // Para web
   private html5QrCode: Html5Qrcode | null = null;
@@ -70,6 +88,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     'Bebidas': '#222428',
     'Carnes': '#eb445a',
     'Limpieza': '#0cd1e8',
+    'Frutas': '#10b981',
     'Snacks': '#7044ff',
     'Otros': '#92949c'
   };
@@ -101,13 +120,25 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       'cart-outline': cartOutline,
       'checkmark-circle': checkmarkCircle,
       'alert-circle-outline': alertCircleOutline,
-      'refresh-outline': refreshOutline
+      'refresh-outline': refreshOutline,
+      'sparkles-outline': sparklesOutline,
+      'card-outline': cardOutline,
+      'checkbox-outline': checkboxOutline,
+      'square-outline': squareOutline,
+      'leaf-outline': leafOutline,
+      'swap-horizontal-outline': swapHorizontalOutline,
+      'ribbon-outline': ribbonOutline,
+      'checkmark-done-outline': checkmarkDoneOutline,
+      'chevron-down-outline': chevronDownOutline,
+      'chevron-up-outline': chevronUpOutline
     });
     this.isWeb = !Capacitor.isNativePlatform();
   }
 
   ngOnInit() {
     this.allProducts = this.productsService.getAllProducts();
+    this.loadChecklist();
+
     this.route.queryParams.subscribe(params => {
       if (params['index'] !== undefined) {
         this.editIndex = parseInt(params['index'], 10);
@@ -143,7 +174,10 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
         this.budget = data.budget;
         this.totalSpent = data.totalSpent;
         this.scannedItems = data.items;
+        this.totalSavingsAccumulated = data.totalSavingsAccumulated || 0;
+        this.selectedCardDiscount = data.selectedCardDiscount || 'none';
         if (this.chart) this.updateChart();
+        this.syncChecklistWithItems();
       }
     }
   }
@@ -173,7 +207,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       const gain = audioCtx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(1760, audioCtx.currentTime); // Beep nítido
+      osc.frequency.setValueAtTime(1760, audioCtx.currentTime);
       gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
 
@@ -182,9 +216,30 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
 
       osc.start();
       osc.stop(audioCtx.currentTime + 0.1);
-    } catch (e) {
-      // AudioContext bloqueado o no disponible
-    }
+    } catch (e) {}
+  }
+
+  playSuccessChime() {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const audioCtx = new AudioContextClass();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
+      osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16); // G5
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.35);
+    } catch (e) {}
   }
 
   async triggerHaptic() {
@@ -194,6 +249,130 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
         await Haptics.impact({ style: ImpactStyle.Medium });
       }
     } catch (e) {}
+  }
+
+  // FASE 2 INNOVACIÓN: SMART SWITCH (Sugerencia de ahorro y cambio en 1 clic)
+  getSmartSwitchForProduct(item: any): { alternative: Product; savings: number } | null {
+    return this.productsService.getSmartSwitchAlternative(item);
+  }
+
+  applySmartSwitch(index: number) {
+    const currentItem = this.scannedItems[index];
+    const suggestion = this.getSmartSwitchForProduct(currentItem);
+    if (!suggestion) return;
+
+    this.playSuccessChime();
+    this.triggerHaptic();
+
+    const oldPrice = (currentItem.inOffer && currentItem.offerPrice) ? currentItem.offerPrice : currentItem.price;
+    const newPrice = (suggestion.alternative.inOffer && suggestion.alternative.offerPrice) ? suggestion.alternative.offerPrice : suggestion.alternative.price;
+    const qty = currentItem.quantity || 1;
+    const totalSaving = (oldPrice - newPrice) * qty;
+
+    // Sustituir el ítem en la posición manteniendo la cantidad
+    this.scannedItems[index] = {
+      ...suggestion.alternative,
+      quantity: qty
+    };
+
+    this.totalSpent -= (oldPrice * qty);
+    this.totalSpent += (newPrice * qty);
+    this.totalSavingsAccumulated += totalSaving;
+
+    this.updateChart();
+    this.presentToast(`¡Smart Switch aplicado! Ahorraste $${totalSaving.toLocaleString('es-CL')}`);
+  }
+
+  // FASE 2 INNOVACIÓN: CHECKLIST PRE-SUPERMERCADO ("Mi Lista vs Lo que Llevo")
+  loadChecklist() {
+    const saved = localStorage.getItem('liderin_planned_checklist');
+    if (saved) {
+      try {
+        this.plannedItems = JSON.parse(saved);
+      } catch (e) {
+        this.plannedItems = [];
+      }
+    } else {
+      // Checklist predeterminado sugerido
+      this.plannedItems = [
+        { id: '1', name: 'Leche', completed: false },
+        { id: '2', name: 'Arroz', completed: false },
+        { id: '3', name: 'Detergente', completed: false }
+      ];
+      this.saveChecklist();
+    }
+  }
+
+  saveChecklist() {
+    localStorage.setItem('liderin_planned_checklist', JSON.stringify(this.plannedItems));
+  }
+
+  addPlannedItem() {
+    if (!this.newPlannedItemText.trim()) return;
+    const newItem: PlannedItem = {
+      id: Date.now().toString(),
+      name: this.newPlannedItemText.trim(),
+      completed: false
+    };
+    this.plannedItems.push(newItem);
+    this.newPlannedItemText = '';
+    this.saveChecklist();
+    this.syncChecklistWithItems();
+  }
+
+  togglePlannedItem(index: number) {
+    this.plannedItems[index].completed = !this.plannedItems[index].completed;
+    this.saveChecklist();
+  }
+
+  deletePlannedItem(index: number) {
+    this.plannedItems.splice(index, 1);
+    this.saveChecklist();
+  }
+
+  private syncChecklistWithItems() {
+    // Verificar si algún artículo escaneado coincide con la lista planeada
+    for (const plan of this.plannedItems) {
+      const planNorm = plan.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const isFound = this.scannedItems.some(item => {
+        const itemNorm = item.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return itemNorm.includes(planNorm) || planNorm.includes(itemNorm.split(' ')[0]);
+      });
+      if (isFound && !plan.completed) {
+        plan.completed = true;
+      }
+    }
+    this.saveChecklist();
+  }
+
+  getCompletedPlannedCount(): number {
+    return this.plannedItems.filter(p => p.completed).length;
+  }
+
+  // FASE 2 INNOVACIÓN: DESCUENTOS DE TARJETA Y FIDELIDAD
+  setCardDiscount(card: 'none' | 'lider_bci' | 'club_lider') {
+    this.selectedCardDiscount = card;
+    this.updateChart();
+    const discount = this.getDiscountAmount();
+    if (discount > 0) {
+      this.presentToast(`Descuento de tarjeta aplicado: -$${discount.toLocaleString('es-CL')}`);
+    }
+  }
+
+  getDiscountPercentage(): number {
+    if (this.selectedCardDiscount === 'lider_bci') return 6; // 6% Líder Bci
+    if (this.selectedCardDiscount === 'club_lider') return 3; // 3% Club Líder
+    return 0;
+  }
+
+  getDiscountAmount(): number {
+    const pct = this.getDiscountPercentage();
+    if (pct === 0 || this.totalSpent <= 0) return 0;
+    return Math.round(this.totalSpent * (pct / 100));
+  }
+
+  getFinalTotalToPay(): number {
+    return Math.max(0, this.totalSpent - this.getDiscountAmount());
   }
 
   // CHART LOGIC
@@ -239,14 +418,15 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
 
   private getChartConfig() {
     if (this.chartMode === 'budget') {
-      const remaining = Math.max(0, this.budget - this.totalSpent);
-      const isOver = this.totalSpent > this.budget;
+      const finalSpend = this.getFinalTotalToPay();
+      const remaining = Math.max(0, this.budget - finalSpend);
+      const isOver = finalSpend > this.budget;
       return {
         data: {
           labels: isOver ? ['Gastado', 'Excedido'] : ['Gastado', 'Disponible'],
           datasets: [{
-            data: isOver ? [this.budget, this.totalSpent - this.budget] : [this.totalSpent, remaining],
-            backgroundColor: isOver ? ['#ff7a00', '#eb445a'] : ['#3880ff', '#2dd36f'],
+            data: isOver ? [this.budget, finalSpend - this.budget] : [finalSpend, remaining],
+            backgroundColor: isOver ? ['#ff7a00', '#eb445a'] : ['#0071ce', '#2dd36f'],
             borderWidth: 2,
             borderColor: '#ffffff'
           }]
@@ -292,7 +472,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   // MÉTRICAS Y CÁLCULOS
   getBudgetProgressPercentage(): number {
     if (!this.budget || this.budget <= 0) return 0;
-    return Math.round((this.totalSpent / this.budget) * 100);
+    return Math.round((this.getFinalTotalToPay() / this.budget) * 100);
   }
 
   getBudgetStatusColor(): string {
@@ -322,6 +502,15 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
         color: this.categoryColors[category] || this.categoryColors['Otros']
       }))
       .sort((a, b) => b.total - a.total);
+  }
+
+  // FASE 2: Resumen Nutricional y Alérgenos
+  getHealthyProductsCount(): number {
+    return this.scannedItems.filter(item => !item.seals || item.seals.length === 0).length;
+  }
+
+  getProductsWithSealsCount(): number {
+    return this.scannedItems.filter(item => item.seals && item.seals.length > 0).length;
   }
 
   // MODAL AÑADIR MANUAL
@@ -361,6 +550,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       this.scannedItems.unshift(newProduct);
       this.totalSpent += (product.inOffer && product.offerPrice) ? product.offerPrice : product.price;
       this.updateChart();
+      this.syncChecklistWithItems();
       this.presentToast(`Añadido: ${product.name}`);
     }
     this.closeManualAdd();
@@ -384,6 +574,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       this.scannedItems.unshift(newItem);
       this.totalSpent += newItem.price;
       this.updateChart();
+      this.syncChecklistWithItems();
       this.presentToast(`Añadido: ${newItem.name}`);
       this.closeManualAdd();
     }
@@ -407,7 +598,6 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
           },
           (decodedText) => {
             const now = Date.now();
-            // Debounce de 1.4s para evitar lecturas duplicadas seguidas del mismo código
             if (decodedText === this.lastScannedCode && (now - this.lastScannedTime) < 1400) {
               return;
             }
@@ -496,6 +686,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       const effectivePrice = (product.inOffer && product.offerPrice) ? product.offerPrice : product.price;
       this.totalSpent += effectivePrice;
       this.updateChart();
+      this.syncChecklistWithItems();
       this.showLiveScanBanner(product.name, effectivePrice, 1, product.inOffer);
     } else {
       const mockPrice = Math.floor(Math.random() * 2500) + 500;
@@ -514,6 +705,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       this.scannedItems.unshift(newItem);
       this.totalSpent += newItem.price;
       this.updateChart();
+      this.syncChecklistWithItems();
       this.showLiveScanBanner(newItem.name, newItem.price, 1);
     }
   }
@@ -576,6 +768,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
           handler: () => {
             this.scannedItems = [];
             this.totalSpent = 0;
+            this.totalSavingsAccumulated = 0;
             this.updateChart();
             this.presentToast('Carrito vaciado');
           }
@@ -588,7 +781,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   async presentToast(message: string) {
     const toast = await this.toastController.create({
       message: message,
-      duration: 2000,
+      duration: 2200,
       position: 'bottom',
       color: 'dark',
       cssClass: 'custom-toast-notification'
@@ -601,6 +794,10 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       date: new Date().toISOString(),
       budget: this.budget,
       totalSpent: this.totalSpent,
+      totalSavingsAccumulated: this.totalSavingsAccumulated,
+      selectedCardDiscount: this.selectedCardDiscount,
+      discountAmount: this.getDiscountAmount(),
+      finalTotalToPay: this.getFinalTotalToPay(),
       items: this.scannedItems
     };
 
@@ -619,7 +816,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
 
     const alert = await this.alertController.create({
       header: '¡Presupuesto Guardado!',
-      message: `Se ha guardado tu lista con ${this.getTotalItemsCount()} productos y un total de $${this.totalSpent.toLocaleString('es-CL')}.`,
+      message: `Se ha guardado tu lista con ${this.getTotalItemsCount()} productos y total a pagar de $${this.getFinalTotalToPay().toLocaleString('es-CL')}.`,
       buttons: ['OK']
     });
 

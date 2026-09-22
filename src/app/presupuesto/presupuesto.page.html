@@ -5,7 +5,7 @@
     </button>
     <div class="top-bar-title">
       <h2>Presupuesto en Vivo</h2>
-      <span>Control de gastos en el supermercado</span>
+      <span>Control inteligente de compra</span>
     </div>
     <button class="action-icon-btn" (click)="confirmClearCart()" *ngIf="scannedItems.length > 0" title="Vaciar Carrito">
       <ion-icon name="trash-outline"></ion-icon>
@@ -15,6 +15,63 @@
 
 <!-- Contenido normal (oculto durante el escaneo de cámara completa) -->
 <ion-content class="ion-padding" [class.ion-hide]="isScanning">
+
+  <!-- FASE 2 INNOVACIÓN: CHECKLIST INTERACTIVO ("Mi Lista vs Lo que Llevo") -->
+  <div class="checklist-card">
+    <div class="checklist-header" (click)="showChecklistDrawer = !showChecklistDrawer">
+      <div class="checklist-title">
+        <ion-icon name="checkbox-outline" class="checklist-icon"></ion-icon>
+        <div>
+          <strong>Mi Lista Planeada</strong>
+          <span>{{ getCompletedPlannedCount() }} de {{ plannedItems.length }} productos tachados</span>
+        </div>
+      </div>
+      <div class="checklist-header-right">
+        <span class="checklist-pct-badge">{{ plannedItems.length > 0 ? ((getCompletedPlannedCount() / plannedItems.length) * 100 | number:'1.0-0') : 0 }}%</span>
+        <ion-icon [name]="showChecklistDrawer ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+      </div>
+    </div>
+
+    <!-- Mini barra de progreso del checklist -->
+    <div class="checklist-progress-bar">
+      <div 
+        class="checklist-progress-fill" 
+        [style.width.%]="plannedItems.length > 0 ? (getCompletedPlannedCount() / plannedItems.length) * 100 : 0">
+      </div>
+    </div>
+
+    <!-- Cuerpo desplegable del checklist -->
+    <div class="checklist-drawer-body" *ngIf="showChecklistDrawer">
+      <div class="add-planned-row">
+        <input 
+          type="text" 
+          [(ngModel)]="newPlannedItemText" 
+          placeholder="Escribe un producto que necesitas (ej: Pan)..."
+          (keyup.enter)="addPlannedItem()"
+          class="planned-input"
+        />
+        <button class="add-planned-btn" (click)="addPlannedItem()" [disabled]="!newPlannedItemText.trim()">
+          <ion-icon name="add-circle-outline"></ion-icon>
+        </button>
+      </div>
+
+      <div class="planned-items-list" *ngIf="plannedItems.length > 0">
+        <div class="planned-item-row" *ngFor="let plan of plannedItems; let pi = index" [class.completed]="plan.completed">
+          <div class="plan-info" (click)="togglePlannedItem(pi)">
+            <ion-icon [name]="plan.completed ? 'checkmark-circle' : 'square-outline'" [color]="plan.completed ? 'success' : 'medium'"></ion-icon>
+            <span class="plan-name">{{ plan.name }}</span>
+            <span class="auto-badge" *ngIf="plan.completed">Detectado al escanear</span>
+          </div>
+          <button class="plan-del-btn" (click)="deletePlannedItem(pi)">
+            <ion-icon name="close"></ion-icon>
+          </button>
+        </div>
+      </div>
+      <div class="checklist-hint">
+        💡 Los productos se tildan solos al escanearlos en la tienda.
+      </div>
+    </div>
+  </div>
 
   <!-- TARJETA CONFIGURAR LÍMITE DE PRESUPUESTO -->
   <div class="budget-card">
@@ -45,7 +102,7 @@
       </div>
     </div>
 
-    <!-- Botones rápidos de ajuste (+/- $1.000, $5.000, etc.) -->
+    <!-- Botones rápidos de ajuste (+/- $1.000, $5.000) -->
     <div class="quick-adjust-row">
       <button class="pill-btn minus" (click)="adjustBudget(-1000)">- $1.000</button>
       <button class="pill-btn plus" (click)="adjustBudget(1000)">+ $1.000</button>
@@ -54,14 +111,71 @@
     </div>
 
     <!-- Alertas de Presupuesto Preventivas -->
-    <div class="budget-alert-box warning" *ngIf="budget > 0 && totalSpent >= (budget * 0.85) && totalSpent <= budget">
+    <div class="budget-alert-box warning" *ngIf="budget > 0 && getFinalTotalToPay() >= (budget * 0.85) && getFinalTotalToPay() <= budget">
       <ion-icon name="warning-outline"></ion-icon>
-      <span><strong>¡Cuidado!</strong> Te quedan solo <strong>${{ (budget - totalSpent) | number:'1.0-0' }}</strong> para alcanzar tu límite.</span>
+      <span><strong>¡Cuidado!</strong> Te quedan solo <strong>${{ (budget - getFinalTotalToPay()) | number:'1.0-0' }}</strong> para alcanzar tu límite.</span>
     </div>
 
-    <div class="budget-alert-box danger" *ngIf="budget > 0 && totalSpent > budget">
+    <div class="budget-alert-box danger" *ngIf="budget > 0 && getFinalTotalToPay() > budget">
       <ion-icon name="alert-circle-outline"></ion-icon>
-      <span><strong>¡Presupuesto superado!</strong> Estás excedido por <strong>${{ (totalSpent - budget) | number:'1.0-0' }}</strong>.</span>
+      <span><strong>¡Presupuesto superado!</strong> Estás excedido por <strong>${{ (getFinalTotalToPay() - budget) | number:'1.0-0' }}</strong>.</span>
+    </div>
+  </div>
+
+  <!-- FASE 2 INNOVACIÓN: SELECTOR DE TARJETA / BENEFICIO SUPERMERCADO -->
+  <div class="loyalty-discount-card">
+    <div class="loyalty-header">
+      <ion-icon name="card-outline" class="loyalty-icon"></ion-icon>
+      <div class="loyalty-text">
+        <strong>Beneficios y Tarjeta del Supermercado</strong>
+        <span>Aplica descuentos automáticos para simular tu pago real</span>
+      </div>
+    </div>
+
+    <div class="loyalty-options">
+      <button 
+        class="loyalty-chip" 
+        [class.selected]="selectedCardDiscount === 'none'"
+        (click)="setCardDiscount('none')">
+        General
+      </button>
+      <button 
+        class="loyalty-chip" 
+        [class.selected]="selectedCardDiscount === 'lider_bci'"
+        (click)="setCardDiscount('lider_bci')">
+        💳 Líder Bci (-6%)
+      </button>
+      <button 
+        class="loyalty-chip" 
+        [class.selected]="selectedCardDiscount === 'club_lider'"
+        (click)="setCardDiscount('club_lider')">
+        🎁 Mi Club Líder (-3%)
+      </button>
+    </div>
+
+    <!-- Desglose si hay descuento activo -->
+    <div class="loyalty-summary-breakdown" *ngIf="getDiscountAmount() > 0">
+      <div class="breakdown-row">
+        <span>Subtotal productos:</span>
+        <span>${{ totalSpent | number }}</span>
+      </div>
+      <div class="breakdown-row discount">
+        <span>Descuento Tarjeta ({{ getDiscountPercentage() }}%):</span>
+        <span>- ${{ getDiscountAmount() | number }}</span>
+      </div>
+      <div class="breakdown-row total">
+        <strong>Total a Pagar en Caja:</strong>
+        <strong>${{ getFinalTotalToPay() | number }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 2: BANNER DE AHORRO ACUMULADO (Smart Switch + Ofertas) -->
+  <div class="savings-banner" *ngIf="totalSavingsAccumulated > 0">
+    <ion-icon name="sparkles-outline"></ion-icon>
+    <div class="savings-text">
+      <strong>¡Has ahorrado ${{ totalSavingsAccumulated | number }} en esta compra!</strong>
+      <span>Gracias a las recomendaciones Smart Switch de marca propia.</span>
     </div>
   </div>
 
@@ -93,6 +207,18 @@
         <span class="cat-amount">${{ cat.total | number }} ({{ cat.percentage }}%)</span>
       </div>
     </div>
+
+    <!-- Resumen Nutricional Saludable -->
+    <div class="health-summary-pill" *ngIf="scannedItems.length > 0">
+      <div class="health-col clean">
+        <ion-icon name="leaf-outline"></ion-icon>
+        <span>{{ getHealthyProductsCount() }} sin sellos</span>
+      </div>
+      <div class="health-col warning" *ngIf="getProductsWithSealsCount() > 0">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <span>{{ getProductsWithSealsCount() }} con sellos</span>
+      </div>
+    </div>
   </div>
 
   <!-- BOTONES PRINCIPALES DE ACCIÓN -->
@@ -120,7 +246,7 @@
   <div class="items-list-container">
     <div class="list-section-header">
       <h3>Productos en Carrito ({{ getTotalItemsCount() }})</h3>
-      <span class="subtotal-indicator">Total: ${{ totalSpent | number }}</span>
+      <span class="subtotal-indicator">Total: ${{ getFinalTotalToPay() | number }}</span>
     </div>
 
     <!-- Estado vacío -->
@@ -149,10 +275,43 @@
             <ion-icon name="close"></ion-icon>
           </button>
         </div>
+        
         <div class="product-meta">
           <span class="category-chip">{{ item.category || 'Abarrotes' }}</span>
           <span class="brand-text">{{ item.brand }}</span>
         </div>
+
+        <!-- FASE 2: SELLOS Y ALÉRGENOS NUTRICIONALES -->
+        <div class="product-health-tags">
+          <!-- Sellos negros oficiales -->
+          <span class="seal-badge" *ngFor="let seal of item.seals">
+            {{ seal }}
+          </span>
+          <!-- Sin sellos -->
+          <span class="clean-seal-badge" *ngIf="item.seals && item.seals.length === 0">
+            <ion-icon name="leaf-outline"></ion-icon> Sin Sellos
+          </span>
+          <!-- Alérgenos -->
+          <span class="allergen-badge" *ngFor="let allergen of item.allergens">
+            ⚠️ Contiene {{ allergen }}
+          </span>
+        </div>
+
+        <!-- FASE 2 INNOVACIÓN: TARJETA SUGERENCIA SMART SWITCH -->
+        <div class="smart-switch-box" *ngIf="getSmartSwitchForProduct(item) as switchOffer">
+          <div class="switch-header">
+            <ion-icon name="swap-horizontal-outline"></ion-icon>
+            <span>Smart Switch Ahorro</span>
+          </div>
+          <p>
+            Cambia por <strong>{{ switchOffer.alternative.name }}</strong> y ahorra 
+            <strong class="savings-amount">${{ (switchOffer.savings * (item.quantity || 1)) | number }}</strong>
+          </p>
+          <button class="switch-action-btn" (click)="applySmartSwitch(i)">
+            <ion-icon name="checkmark-done-outline"></ion-icon> Cambiar y Ahorrar
+          </button>
+        </div>
+
         <div class="pricing-and-controls">
           <div class="price-box">
             <span class="unit-price">${{ (item.inOffer && item.offerPrice ? item.offerPrice : item.price) | number }} c/u</span>
@@ -181,11 +340,13 @@
 <!-- BARRA FLOTANTE FIJA INFERIOR (STICKY BUDGET HUD) -->
 <div class="sticky-budget-hud" [class.ion-hide]="isScanning" *ngIf="scannedItems.length > 0">
   <div class="hud-left">
-    <div class="hud-label">TOTAL ACUMULADO</div>
-    <div class="hud-total">${{ totalSpent | number }}</div>
+    <div class="hud-label">
+      TOTAL A PAGAR {{ selectedCardDiscount !== 'none' ? '(Con Tarjeta)' : '' }}
+    </div>
+    <div class="hud-total">${{ getFinalTotalToPay() | number }}</div>
     <div class="hud-subtext" [ngClass]="getBudgetStatusColor()">
-      <span *ngIf="totalSpent <= budget">Te quedan ${{ (budget - totalSpent) | number }}</span>
-      <span *ngIf="totalSpent > budget">¡Excedido por ${{ (totalSpent - budget) | number }}!</span>
+      <span *ngIf="getFinalTotalToPay() <= budget">Te quedan ${{ (budget - getFinalTotalToPay()) | number }}</span>
+      <span *ngIf="getFinalTotalToPay() > budget">¡Excedido por ${{ (getFinalTotalToPay() - budget) | number }}!</span>
     </div>
   </div>
 
@@ -208,7 +369,7 @@
       <span>${{ lastScannedProduct.price | number }} {{ lastScannedProduct.inOffer ? '(En Oferta)' : '' }}</span>
     </div>
     <div class="hud-cart-quick-total">
-      Carro: ${{ totalSpent | number }}
+      Carro: ${{ getFinalTotalToPay() | number }}
     </div>
   </div>
 
@@ -238,7 +399,7 @@
     <!-- Indicador de total acumulado mientras escaneas -->
     <div class="scanner-cart-preview">
       <span>{{ getTotalItemsCount() }} productos en carro</span>
-      <strong>Total: ${{ totalSpent | number }}</strong>
+      <strong>Total: ${{ getFinalTotalToPay() | number }}</strong>
     </div>
 
     <button class="finish-scanning-btn" (click)="stopScan()">

@@ -15,6 +15,9 @@ export interface Product {
     section: string;
     shelf: string;
   };
+  seals?: string[];
+  allergens?: string[];
+  alternativeBarcode?: string;
 }
 
 @Injectable({
@@ -31,8 +34,10 @@ export class ProductsService {
       image: 'https://i5.walmartimages.cl/asr/775df153-9744-4128-ae20-ac1254c4b7ba.41d5a84806e6e592a9abcc656a04f92b.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF',
       barcode: '7801234567890',
       category: 'Lácteos',
-      inOffer: true,
-      offerPrice: 999,
+      inOffer: false,
+      alternativeBarcode: '7801234567990',
+      allergens: ['Lactosa'],
+      seals: [],
       supermarketLocation: {
         aisle: 'Pasillo 1',
         section: 'Refrigerados',
@@ -379,6 +384,59 @@ export class ProductsService {
         section: 'Panadería',
         shelf: 'Estante 1'
       }
+    },
+
+    // PRODUCTOS INNOVADORES SMART SWITCH (Marcas Propias / Ahorro)
+    {
+      id: 101,
+      name: 'Leche Entera Great Value 1L',
+      brand: 'Great Value',
+      price: 890,
+      image: 'https://i5.walmartimages.cl/asr/775df153-9744-4128-ae20-ac1254c4b7ba.41d5a84806e6e592a9abcc656a04f92b.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF',
+      barcode: '7801234567990',
+      category: 'Lácteos',
+      inOffer: true,
+      offerPrice: 790,
+      allergens: ['Lactosa'],
+      seals: [],
+      supermarketLocation: {
+        aisle: 'Pasillo 1',
+        section: 'Refrigerados',
+        shelf: 'Estante 1'
+      }
+    },
+    {
+      id: 102,
+      name: 'Arroz Líder Grado 1 (1kg)',
+      brand: 'Líder',
+      price: 1290,
+      image: 'https://i5.walmartimages.cl/asr/8b6c9a3d-2840-43d9-8a23-e60a2b3cf0d0.0218ffb523bbd604e42ec9aa3cad404b.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF',
+      barcode: '7801234567991',
+      category: 'Abarrotes',
+      inOffer: true,
+      offerPrice: 1090,
+      seals: [],
+      supermarketLocation: {
+        aisle: 'Pasillo 2',
+        section: 'Granos y Cereales',
+        shelf: 'Estante 1'
+      }
+    },
+    {
+      id: 103,
+      name: 'Detergente Líder Concentrado 3L',
+      brand: 'Líder',
+      price: 2190,
+      image: 'https://i5.walmartimages.cl/asr/10adf1b3-9c59-45c4-9669-c5921fa01928.a7979cf774a57ef4365093d6f33984b0.jpeg?null=&odnHeight=612&odnWidth=612&odnBg=FFFFFF',
+      barcode: '7801234567992',
+      category: 'Limpieza',
+      inOffer: true,
+      offerPrice: 1890,
+      supermarketLocation: {
+        aisle: 'Pasillo 4',
+        section: 'Detergentes',
+        shelf: 'Estante 1'
+      }
     }
   ];
 
@@ -435,5 +493,36 @@ export class ProductsService {
       p.category === product.category && 
       p.id !== productId
     ).slice(0, 4); // Máximo 4 productos similares
+  }
+
+  // INNOVACIÓN FASE 2: Smart Switch (Alternativas más económicas)
+  getSmartSwitchAlternative(product: Product): { alternative: Product; savings: number } | null {
+    const currentPrice = (product.inOffer && product.offerPrice) ? product.offerPrice : product.price;
+
+    if (product.alternativeBarcode) {
+      const alt = this.findProductByBarcode(product.alternativeBarcode);
+      if (alt) {
+        const altPrice = (alt.inOffer && alt.offerPrice) ? alt.offerPrice : alt.price;
+        if (altPrice < currentPrice) {
+          return { alternative: alt, savings: currentPrice - altPrice };
+        }
+      }
+    }
+    
+    // Buscar en la misma categoría si hay un producto más barato con al menos $200 de diferencia
+    const candidates = this.mockProducts
+      .filter(p => p.category === product.category && p.id !== product.id && p.barcode !== product.barcode)
+      .map(p => {
+        const pPrice = (p.inOffer && p.offerPrice) ? p.offerPrice : p.price;
+        return { product: p, price: pPrice, savings: currentPrice - pPrice };
+      })
+      .filter(item => item.savings >= 200)
+      .sort((a, b) => b.savings - a.savings);
+
+    if (candidates.length > 0) {
+      return { alternative: candidates[0].product, savings: candidates[0].savings };
+    }
+
+    return null;
   }
 }
