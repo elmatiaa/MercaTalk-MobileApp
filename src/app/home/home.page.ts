@@ -13,7 +13,8 @@ import {
   volumeHigh, volumeMute, play, reload,
   informationCircle, calculator, cart, bagCheck,
   chevronDown, apps, map, pricetags, chatbubbleEllipses, checkmarkCircle, ellipsisHorizontal,
-  scanOutline, cartOutline, pricetagOutline, qrCode, cube, chevronForward, listOutline
+  scanOutline, cartOutline, pricetagOutline, qrCode, cube, chevronForward, listOutline,
+  arrowForwardOutline
 } from 'ionicons/icons';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -117,11 +118,16 @@ export class HomePage implements OnInit, OnDestroy {
       'qr-code': qrCode,
       cube,
       'chevron-forward': chevronForward,
-      'list-outline': listOutline
+      'list-outline': listOutline,
+      'arrow-forward-outline': arrowForwardOutline
     });
   }
 
   savedListsCount = 0;
+
+  startPitchDemo() {
+    this.router.navigate(['/presupuesto'], { queryParams: { demoPitch: 'true' } });
+  }
 
   ngOnInit() {
     this.checkSpeechSupport();

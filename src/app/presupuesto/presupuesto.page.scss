@@ -48,6 +48,49 @@ ion-content {
     color: var(--accent-danger);
   }
 
+  .top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .pitch-mode-btn {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: #ffc220;
+      border: 1px solid rgba(255, 194, 32, 0.4);
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+
+      ion-icon {
+        font-size: 13px;
+      }
+    }
+
+    .assistant-top-btn {
+      background: #eff6ff;
+      color: #0071ce;
+      border: 1px solid #bfdbfe;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+
+      ion-icon {
+        font-size: 14px;
+      }
+    }
+  }
+
   .top-bar-title {
     text-align: center;
     h2 {
@@ -1611,3 +1654,202 @@ ion-content {
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
+
+/* FASE 5: MODAL EJECUTIVO PITCH DECK */
+.executive-pitch-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.25s ease-out;
+
+  .executive-pitch-modal-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 440px;
+    max-height: 90vh;
+    border-radius: 22px;
+    overflow-y: auto;
+    padding: 22px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    border-top: 6px solid #ffc220;
+
+    .pitch-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+
+      .pitch-badge-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+
+        ion-icon {
+          font-size: 13px;
+        }
+      }
+
+      .pitch-modal-close-btn {
+        background: #f1f5f9;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        cursor: pointer;
+        font-size: 18px;
+      }
+    }
+
+    .pitch-modal-hero {
+      margin-bottom: 16px;
+
+      h2 {
+        margin: 0 0 6px 0;
+        font-size: 20px;
+        font-weight: 800;
+        color: #0f172a;
+      }
+
+      p {
+        margin: 0;
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.4;
+      }
+    }
+
+    .pitch-kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+
+      .pitch-kpi-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+
+        &.highlight {
+          background: #eff6ff;
+          border-color: #bfdbfe;
+          .kpi-value {
+            color: #0071ce;
+          }
+        }
+
+        .kpi-label {
+          font-size: 10px;
+          text-transform: uppercase;
+          font-weight: 700;
+          color: #64748b;
+        }
+
+        .kpi-value {
+          font-size: 18px;
+          font-weight: 900;
+          color: #0f172a;
+          margin: 3px 0 2px 0;
+        }
+
+        .kpi-sub {
+          font-size: 10px;
+          color: #10b981;
+          font-weight: 600;
+        }
+      }
+    }
+
+    .pitch-business-points {
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+
+      .pitch-point-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+
+        .point-check {
+          color: #0071ce;
+          font-size: 18px;
+          margin-top: 2px;
+          flex-shrink: 0;
+        }
+
+        div {
+          font-size: 12px;
+          line-height: 1.35;
+          color: #475569;
+
+          strong {
+            display: block;
+            color: #0f172a;
+            font-size: 12px;
+          }
+        }
+      }
+    }
+
+    .pitch-modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .pitch-export-btn {
+        background: #25d366;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 13px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+
+        ion-icon {
+          font-size: 18px;
+        }
+      }
+
+      .pitch-close-secondary-btn {
+        background: transparent;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    }
+  }
+}
+

@@ -16,7 +16,8 @@ import {
   leafOutline, swapHorizontalOutline, ribbonOutline, checkmarkDoneOutline,
   chevronDownOutline, chevronUpOutline, chatbubblesOutline, sendOutline,
   micOutline, micOffOutline, volumeHighOutline, volumeMuteOutline,
-  bulbOutline, compassOutline, sparkles
+  bulbOutline, compassOutline, sparkles,
+  downloadOutline, shareSocialOutline, checkmarkDone, trophyOutline, playCircleOutline
 } from 'ionicons/icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import { ProductsService, Product } from '../services/products';
@@ -160,10 +161,17 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       'volume-mute-outline': volumeMuteOutline,
       'bulb-outline': bulbOutline,
       'compass-outline': compassOutline,
-      'sparkles': sparkles
+      'sparkles': sparkles,
+      'download-outline': downloadOutline,
+      'share-social-outline': shareSocialOutline,
+      'checkmark-done': checkmarkDone,
+      'trophy-outline': trophyOutline,
+      'play-circle-outline': playCircleOutline
     });
     this.isWeb = !Capacitor.isNativePlatform();
   }
+
+  showPitchExecutiveModal: boolean = false;
 
   ngOnInit() {
     this.allProducts = this.productsService.getAllProducts();
@@ -174,6 +182,8 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       if (params['index'] !== undefined) {
         this.editIndex = parseInt(params['index'], 10);
         this.loadBudget(this.editIndex);
+      } else if (params['demoPitch'] === 'true') {
+        this.loadDemoPitchData();
       }
     });
   }
@@ -1033,4 +1043,97 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
 
     await alert.present();
   }
+
+  // FASE 5: DEMO PITCH MODE (Simulación para Ingenieros Comerciales e Inversionistas)
+  loadDemoPitchData() {
+    this.budget = 20000;
+    this.selectedCardDiscount = 'lider_bci';
+
+    // Lista realista de demostración con productos representativos del catálogo
+    const demoCatalog = this.productsService.getAllProducts();
+    const leche = demoCatalog.find(p => p.id === 1) || {
+      id: 1, name: 'Leche Entera Colun 1L', brand: 'Colun', category: 'Lácteos',
+      price: 1190, barcode: '7801234567890', image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=300'
+    };
+    const pan = demoCatalog.find(p => p.id === 2) || {
+      id: 2, name: 'Pan de Molde Ideal Blanco 550g', brand: 'Ideal', category: 'Panadería',
+      price: 2190, barcode: '7802345678901', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300'
+    };
+    const arroz = demoCatalog.find(p => p.id === 3) || {
+      id: 3, name: 'Arroz Grado 1 Tucapel 1kg', brand: 'Tucapel', category: 'Abarrotes',
+      price: 1450, barcode: '7803456789012', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300'
+    };
+    const fideos = demoCatalog.find(p => p.id === 6) || {
+      id: 6, name: 'Fideos Spaghetti Carozzi 400g', brand: 'Carozzi', category: 'Abarrotes',
+      price: 890, barcode: '7806789012345', image: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=300'
+    };
+
+    this.scannedItems = [
+      { ...leche, quantity: 2 },
+      { ...pan, quantity: 1 },
+      { ...arroz, quantity: 1 },
+      { ...fideos, quantity: 2 }
+    ];
+
+    // Calcular gasto total inicial
+    this.totalSpent = (leche.price * 2) + pan.price + arroz.price + (fideos.price * 2);
+    this.totalSavingsAccumulated = 1380; // Ahorro Smart Switch simulado previo
+
+    // Configurar checklist representativo
+    this.plannedItems = [
+      { id: 'p1', name: 'Leche', completed: true },
+      { id: 'p2', name: 'Pan', completed: true },
+      { id: 'p3', name: 'Arroz', completed: true },
+      { id: 'p4', name: 'Fideos', completed: true },
+      { id: 'p5', name: 'Queso laminado', completed: false }
+    ];
+    this.saveChecklist();
+
+    this.updateChart();
+    this.presentToast('🚀 Modo Pitch Activado: Carrito realista cargado');
+    this.showPitchExecutiveModal = true;
+  }
+
+  openPitchExecutiveModal() {
+    this.showPitchExecutiveModal = true;
+  }
+
+  closePitchExecutiveModal() {
+    this.showPitchExecutiveModal = false;
+  }
+
+  exportExecutiveSummaryReport() {
+    const totalDescuentoTarjeta = this.getDiscountAmount();
+    const finalTotal = this.getFinalTotalToPay();
+    const ahorroTotal = this.totalSavingsAccumulated + totalDescuentoTarjeta;
+    const porcentajeAhorro = this.totalSpent > 0 ? Math.round((ahorroTotal / (this.totalSpent + this.totalSavingsAccumulated)) * 100) : 0;
+
+    const report = 
+`📊 *INFORME EJECUTIVO MERCATALK - PROPUESTA COMERCIAL*
+━━━━━━━━━━━━━━━━━━━━━
+🏪 *Supermercado:* Líder / Walmart Chile
+📱 *Solución:* MercaTalk Mobile App (Shopper Self-Scanning & Budget Control)
+
+📈 *MÉTRICAS CLAVE DE LA SIMULACIÓN:*
+• Presupuesto Estimado: $${this.budget.toLocaleString('es-CL')}
+• Subtotal en Carrito: $${this.totalSpent.toLocaleString('es-CL')}
+• Descuento Tarjeta Líder BCI (6%): -$${totalDescuentoTarjeta.toLocaleString('es-CL')}
+• Total Final Pagado: $${finalTotal.toLocaleString('es-CL')}
+• *Ahorro Total para el Cliente: $${ahorroTotal.toLocaleString('es-CL')} (${porcentajeAhorro}%)*
+
+🛒 *DESGLOSE DE PRODUCTOS (${this.getTotalItemsCount()} uds):*
+${this.scannedItems.map(item => `• ${item.quantity}x ${item.name} ($${((item.inOffer && item.offerPrice ? item.offerPrice : item.price) * item.quantity).toLocaleString('es-CL')})`).join('\n')}
+
+💡 *PROPUESTA DE VALOR PARA EL SUPERMERCADO:*
+1. Reduce filas en cajas tradicionales en hasta un 35%.
+2. Aumenta adopción de Tarjeta Líder BCI gracias al cálculo transparente de beneficios.
+3. Potencia ventas de Marcas Propias mediante el recomendador Smart Switch.
+4. Asistente Conversacional IA para fidelizar y responder dudas en tiempo real en la góndola.
+━━━━━━━━━━━━━━━━━━━━━
+_Generado por prototipo interactivo MercaTalk Mobile_`;
+
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(report)}`;
+    window.open(whatsappUrl, '_blank');
+  }
 }
+

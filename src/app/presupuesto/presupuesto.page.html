@@ -8,6 +8,10 @@
       <span>Control inteligente de compra</span>
     </div>
     <div class="top-bar-actions">
+      <button class="pitch-mode-btn" (click)="loadDemoPitchData()" title="Cargar Simulación Pitch">
+        <ion-icon name="sparkles"></ion-icon>
+        <span>Pitch</span>
+      </button>
       <button class="assistant-top-btn" (click)="openAssistantModal()" title="Asistente MercaTalk">
         <ion-icon name="chatbubbles-outline"></ion-icon>
         <span>IA</span>
@@ -588,3 +592,84 @@
     </div>
   </div>
 </div>
+
+<!-- FASE 5: MODAL EJECUTIVO PARA DEMO PITCH / INVERSIONISTAS -->
+<div class="executive-pitch-modal-overlay" *ngIf="showPitchExecutiveModal">
+  <div class="executive-pitch-modal-card">
+    <div class="pitch-modal-header">
+      <div class="pitch-badge-tag">
+        <ion-icon name="sparkles"></ion-icon>
+        <span>MercaTalk Pitch Deck</span>
+      </div>
+      <button class="pitch-modal-close-btn" (click)="closePitchExecutiveModal()">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+
+    <div class="pitch-modal-hero">
+      <h2>Simulación Comercial Activa</h2>
+      <p>Escenario optimizado para presentación ante ingenieros comerciales y gerencias de supermercado.</p>
+    </div>
+
+    <!-- Resumen de Métricas de Negocio -->
+    <div class="pitch-kpi-grid">
+      <div class="pitch-kpi-card highlight">
+        <span class="kpi-label">Ahorro al Cliente</span>
+        <strong class="kpi-value">${{ (totalSavingsAccumulated + getDiscountAmount()) | number }}</strong>
+        <span class="kpi-sub">Smart Switch + Tarjeta Bci</span>
+      </div>
+      <div class="pitch-kpi-card">
+        <span class="kpi-label">Beneficio Tarjeta Bci</span>
+        <strong class="kpi-value">-${{ getDiscountAmount() | number }}</strong>
+        <span class="kpi-sub">6% cashback inmediato</span>
+      </div>
+      <div class="pitch-kpi-card">
+        <span class="kpi-label">Índice Checklist</span>
+        <strong class="kpi-value">{{ getCompletedPlannedCount() }}/{{ plannedItems.length }}</strong>
+        <span class="kpi-sub">80% completitud compra</span>
+      </div>
+      <div class="pitch-kpi-card">
+        <span class="kpi-label">Ticket Promedio</span>
+        <strong class="kpi-value">${{ getFinalTotalToPay() | number }}</strong>
+        <span class="kpi-sub">Control vs Tope $20.000</span>
+      </div>
+    </div>
+
+    <!-- Puntos Clave de Venta B2B -->
+    <div class="pitch-business-points">
+      <div class="pitch-point-item">
+        <ion-icon name="checkmark-done" class="point-check"></ion-icon>
+        <div>
+          <strong>Menos fricción en cajas:</strong>
+          <span>Los clientes empacan mientras escanean, acortando tiempos de checkout.</span>
+        </div>
+      </div>
+      <div class="pitch-point-item">
+        <ion-icon name="checkmark-done" class="point-check"></ion-icon>
+        <div>
+          <strong>Impulso de Marcas Propias:</strong>
+          <span>El botón "Smart Switch" sugiere alternativas Great Value / Líder de mayor margen.</span>
+        </div>
+      </div>
+      <div class="pitch-point-item">
+        <ion-icon name="checkmark-done" class="point-check"></ion-icon>
+        <div>
+          <strong>Asistente IA sin costo de personal:</strong>
+          <span>Resuelve recetas, sustitutos y pasillos al instante en el teléfono del cliente.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones Ejecutivas -->
+    <div class="pitch-modal-actions">
+      <button class="pitch-export-btn" (click)="exportExecutiveSummaryReport()">
+        <ion-icon name="share-social-outline"></ion-icon>
+        <span>Exportar Reporte Ejecutivo a WhatsApp</span>
+      </button>
+      <button class="pitch-close-secondary-btn" (click)="closePitchExecutiveModal()">
+        <span>Explorar la Aplicación en Vivo</span>
+      </button>
+    </div>
+  </div>
+</div>
+
