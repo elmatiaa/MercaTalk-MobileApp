@@ -1,67 +1,213 @@
 <ion-header class="ion-no-border">
   <div class="modern-top-bar">
-    <button class="back-icon-btn" (click)="goBack()">
+    <button class="back-icon-btn" (click)="goBack()" aria-label="Volver">
       <ion-icon name="arrow-back-outline"></ion-icon>
     </button>
     <div class="top-bar-title">
-      <h2>Mis Listas</h2>
-      <span>Presupuestos guardados</span>
+      <h2>Mis Listas y Compras</h2>
+      <span>Historial y ahorro acumulado</span>
     </div>
+    <button class="new-list-top-btn" (click)="createNew()" title="Nueva Compra">
+      <ion-icon name="add-circle-outline"></ion-icon>
+    </button>
   </div>
 </ion-header>
 
 <ion-content class="bg-gray">
   <div class="list-container">
-    <div class="empty-state" *ngIf="savedBudgets.length === 0">
-      <ion-icon name="list-outline"></ion-icon>
-      <h2>Aún no tienes listas</h2>
-      <p>Escanea productos y guarda tu presupuesto para verlo aquí.</p>
-      
-      <ion-button expand="block" class="primary-btn mt-20" (click)="createNew()">
-        <ion-icon name="add-circle-outline" slot="start"></ion-icon>
-        Crear nueva lista
-      </ion-button>
+
+    <!-- FASE 4: TARJETA DE IMPACTO Y AHORRO GLOBAL -->
+    <div class="metrics-overview-card" *ngIf="savedBudgets.length > 0">
+      <div class="metrics-header">
+        <ion-icon name="trending-up-outline"></ion-icon>
+        <span>RESUMEN HISTÓRICO DE COMPRAS</span>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <span class="m-label">Ahorro Total</span>
+          <strong class="m-val green">${{ getTotalSavingsAll() | number }}</strong>
+        </div>
+        <div class="metric-box">
+          <span class="m-label">Total Gastado</span>
+          <strong class="m-val">${{ getTotalSpentAll() | number }}</strong>
+        </div>
+        <div class="metric-box">
+          <span class="m-label">Gasto Promedio</span>
+          <strong class="m-val">${{ getAverageSpent() | number }}</strong>
+        </div>
+        <div class="metric-box">
+          <span class="m-label">Visitas</span>
+          <strong class="m-val">{{ savedBudgets.length }}</strong>
+        </div>
+      </div>
     </div>
 
+    <!-- ESTADO VACÍO -->
+    <div class="empty-state" *ngIf="savedBudgets.length === 0">
+      <div class="empty-circle">
+        <ion-icon name="list-outline"></ion-icon>
+      </div>
+      <h2>Aún no tienes listas guardadas</h2>
+      <p>Escanea tus compras en el supermercado y guarda tu presupuesto para revisar tus boletas y ahorro acumulado aquí.</p>
+      
+      <button class="primary-hero-btn mt-20" (click)="createNew()">
+        <ion-icon name="add-circle-outline"></ion-icon> Iniciar Mi Primer Presupuesto
+      </button>
+    </div>
+
+    <!-- LISTADO DE COMPRAS ANTERIORES -->
     <div class="budget-card" *ngFor="let b of savedBudgets; let i = index">
       <div class="budget-header">
         <div class="date-badge">
-          {{ b.date | date:'dd/MM/yyyy' }}
+          📅 {{ b.date | date:'dd/MM/yyyy • HH:mm' }}
         </div>
-        <ion-badge color="primary">{{ b.items.length }} Productos</ion-badge>
+        <span class="items-count-badge">{{ b.items.length }} Productos</span>
       </div>
 
       <div class="budget-body">
         <div class="amount-row">
-          <span>Presupuesto total:</span>
+          <span>Presupuesto objetivo:</span>
           <strong>${{ b.budget | number }}</strong>
         </div>
-        <div class="amount-row">
-          <span>Gastado ({{ b.items.length }} items):</span>
-          <strong class="spent">${{ b.totalSpent | number }}</strong>
+        <div class="amount-row highlight">
+          <span>Total a pagar:</span>
+          <strong class="spent">${{ (b.finalTotalToPay || b.totalSpent) | number }}</strong>
+        </div>
+
+        <!-- Indicador de Ahorro si tuvo Smart Switch o Tarjeta -->
+        <div class="savings-tag-row" *ngIf="(b.totalSavingsAccumulated || 0) + (b.discountAmount || 0) > 0">
+          <ion-icon name="sparkles-outline"></ion-icon>
+          <span>Ahorraste ${{ ((b.totalSavingsAccumulated || 0) + (b.discountAmount || 0)) | number }} en esta compra</span>
         </div>
         
+        <!-- Barra de Presupuesto -->
         <div class="progress-bar">
-          <div class="fill" [style.width.%]="(b.totalSpent / b.budget) * 100"
-               [style.background]="(b.totalSpent / b.budget) > 0.9 ? '#eb445a' : '#2dd36f'"></div>
+          <div class="fill" 
+               [style.width.%]="((b.finalTotalToPay || b.totalSpent) / b.budget) * 100 > 100 ? 100 : (((b.finalTotalToPay || b.totalSpent) / b.budget) * 100)"
+               [style.background]="((b.finalTotalToPay || b.totalSpent) / b.budget) > 1 ? '#eb445a' : '#2dd36f'">
+          </div>
+        </div>
+
+        <!-- Botón para ver u ocultar productos -->
+        <button class="toggle-details-btn" (click)="toggleDetails(i)">
+          <span>{{ expandedIndex === i ? 'Ocultar productos' : 'Ver productos (' + b.items.length + ')' }}</span>
+          <ion-icon [name]="expandedIndex === i ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+        </button>
+
+        <!-- Desglose de Productos Expandible -->
+        <div class="expanded-items-box" *ngIf="expandedIndex === i">
+          <div class="mini-product-row" *ngFor="let it of b.items">
+            <span class="p-qty">{{ it.quantity || 1 }}x</span>
+            <span class="p-name">{{ it.name }}</span>
+            <span class="p-price">${{ ((it.inOffer && it.offerPrice ? it.offerPrice : it.price) * (it.quantity || 1)) | number }}</span>
+          </div>
         </div>
       </div>
 
-      <div class="budget-footer">
-        <ion-button fill="clear" color="danger" (click)="deleteBudget(i)">
-          <ion-icon name="trash-outline" slot="start"></ion-icon>
-          Eliminar
-        </ion-button>
-        <ion-button class="edit-btn" fill="solid" color="primary" (click)="editBudget(i)">
-          <ion-icon name="create-outline" slot="start"></ion-icon>
-          Abrir y Editar
-        </ion-button>
+      <!-- Barra de Acciones de la Lista -->
+      <div class="budget-footer-actions">
+        <!-- Compartir por WhatsApp -->
+        <button class="action-btn-sm whatsapp" (click)="shareListWhatsApp(b)" title="Compartir por WhatsApp">
+          <ion-icon name="share-social-outline"></ion-icon>
+          <span>WhatsApp</span>
+        </button>
+
+        <!-- Ver Ticket Digital -->
+        <button class="action-btn-sm ticket" (click)="openTicketModal(b)" title="Ver Boleta Digital">
+          <ion-icon name="receipt-outline"></ion-icon>
+          <span>Ticket</span>
+        </button>
+
+        <!-- Duplicar Lista -->
+        <button class="action-btn-sm duplicate" (click)="duplicateBudget(b)" title="Comprar lo mismo hoy">
+          <ion-icon name="duplicate-outline"></ion-icon>
+          <span>Reutilizar</span>
+        </button>
+
+        <!-- Editar y Eliminar -->
+        <button class="action-btn-sm edit" (click)="editBudget(i)" title="Editar">
+          <ion-icon name="create-outline"></ion-icon>
+        </button>
+
+        <button class="action-btn-sm delete" (click)="deleteBudget(i)" title="Eliminar">
+          <ion-icon name="trash-outline"></ion-icon>
+        </button>
       </div>
     </div>
     
-    <ion-button *ngIf="savedBudgets.length > 0" expand="block" class="primary-btn mt-20" (click)="createNew()">
-      <ion-icon name="add-circle-outline" slot="start"></ion-icon>
-      Escanear nueva lista
-    </ion-button>
+    <button *ngIf="savedBudgets.length > 0" class="primary-hero-btn mt-20" (click)="createNew()">
+      <ion-icon name="add-circle-outline"></ion-icon>
+      Escanear Nueva Compra
+    </button>
   </div>
 </ion-content>
+
+<!-- FASE 4: MODAL DE TICKET / BOLETA DIGITAL DE SUPERMERCADO -->
+<div class="ticket-modal-overlay" *ngIf="showTicketModal && selectedTicket">
+  <div class="ticket-receipt-card">
+    <button class="close-receipt-btn" (click)="closeTicketModal()">
+      <ion-icon name="close-outline"></ion-icon>
+    </button>
+
+    <div class="receipt-header">
+      <div class="supermarket-logo">MercaTalk</div>
+      <div class="receipt-subtitle">BOLETA DIGITAL DE COMPRA</div>
+      <div class="receipt-datetime">{{ selectedTicket.date | date:'dd/MM/yyyy HH:mm:ss' }}</div>
+    </div>
+
+    <div class="receipt-divider"></div>
+
+    <div class="receipt-items-table">
+      <div class="receipt-row header">
+        <span>CANT/DESCRIPCIÓN</span>
+        <span>TOTAL</span>
+      </div>
+      <div class="receipt-row" *ngFor="let it of selectedTicket.items">
+        <div class="item-desc">
+          <span class="qty">{{ it.quantity || 1 }}x</span> {{ it.name }}
+        </div>
+        <div class="item-amount">
+          ${{ ((it.inOffer && it.offerPrice ? it.offerPrice : it.price) * (it.quantity || 1)) | number }}
+        </div>
+      </div>
+    </div>
+
+    <div class="receipt-divider"></div>
+
+    <div class="receipt-totals">
+      <div class="receipt-tot-row">
+        <span>SUBTOTAL:</span>
+        <span>${{ selectedTicket.totalSpent | number }}</span>
+      </div>
+      <div class="receipt-tot-row discount" *ngIf="selectedTicket.discountAmount > 0">
+        <span>DESC. TARJETA:</span>
+        <span>- ${{ selectedTicket.discountAmount | number }}</span>
+      </div>
+      <div class="receipt-tot-row total">
+        <strong>TOTAL A PAGAR:</strong>
+        <strong>${{ (selectedTicket.finalTotalToPay || selectedTicket.totalSpent) | number }}</strong>
+      </div>
+      <div class="receipt-tot-row savings" *ngIf="(selectedTicket.totalSavingsAccumulated || 0) + (selectedTicket.discountAmount || 0) > 0">
+        <span>AHORRO MERCATALK:</span>
+        <span>${{ ((selectedTicket.totalSavingsAccumulated || 0) + (selectedTicket.discountAmount || 0)) | number }}</span>
+      </div>
+    </div>
+
+    <div class="receipt-divider"></div>
+
+    <!-- Simulación de Código de Barras de Caja -->
+    <div class="receipt-barcode">
+      <div class="barcode-lines"></div>
+      <span class="barcode-number">7809988776655-OK</span>
+    </div>
+
+    <div class="receipt-footer-buttons">
+      <button class="receipt-btn copy" (click)="copyListToClipboard(selectedTicket)">
+        <ion-icon name="copy-outline"></ion-icon> Copiar Detalle
+      </button>
+      <button class="receipt-btn share" (click)="shareListWhatsApp(selectedTicket)">
+        <ion-icon name="share-social-outline"></ion-icon> WhatsApp
+      </button>
+    </div>
+  </div>
+</div>

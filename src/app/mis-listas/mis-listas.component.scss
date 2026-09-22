@@ -135,3 +135,310 @@
 .mt-20 {
   margin-top: 20px;
 }
+
+// Fase 4: Métricas Resumen Superior
+.metrics-overview-card {
+  background: linear-gradient(135deg, #0071ce 0%, #004f98 100%);
+  border-radius: 18px;
+  padding: 18px;
+  color: white;
+  margin-bottom: 22px;
+  box-shadow: 0 8px 20px rgba(0, 113, 206, 0.25);
+
+  .metrics-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 8px;
+
+    ion-icon {
+      font-size: 20px;
+      color: #ffc220;
+    }
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+
+    .metric-item {
+      display: flex;
+      flex-direction: column;
+
+      .metric-label {
+        font-size: 11px;
+        opacity: 0.85;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+
+      .metric-val {
+        font-size: 18px;
+        font-weight: 800;
+        margin-top: 2px;
+      }
+    }
+  }
+
+  .savings-highlight-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+
+    ion-icon {
+      color: #70e000;
+      font-size: 18px;
+    }
+
+    strong {
+      color: #fffa65;
+    }
+  }
+}
+
+// Badge de ahorro en card
+.savings-tag-row {
+  margin: 10px 0;
+  display: flex;
+
+  .savings-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+
+    ion-icon {
+      font-size: 14px;
+    }
+  }
+}
+
+// Botón colapsable y desglose de items
+.products-toggle-btn {
+  --color: #0071ce;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 6px 0;
+}
+
+.products-breakdown {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 10px 0;
+
+  .item-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px dashed #e0e0e0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .item-name {
+      color: #444;
+      flex: 1;
+    }
+
+    .item-subtotal {
+      font-weight: 700;
+      color: #222;
+      margin-left: 10px;
+    }
+  }
+}
+
+// Botones de acción inferiores en cada lista
+.budget-footer-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+
+  .action-btn-sm {
+    --border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    height: 32px;
+    flex: 1;
+    min-width: 90px;
+  }
+}
+
+// Modal Ticket Digital Térmico
+.ticket-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+
+  .ticket-receipt-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 360px;
+    max-height: 85vh;
+    border-radius: 14px;
+    overflow-y: auto;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+    padding: 22px 18px;
+    font-family: 'Courier New', Courier, monospace;
+    color: #111;
+    border-top: 6px solid #0071ce;
+
+    .ticket-header {
+      text-align: center;
+      margin-bottom: 14px;
+
+      h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 900;
+        color: #0071ce;
+        letter-spacing: 1px;
+      }
+
+      p {
+        margin: 3px 0 0;
+        font-size: 11px;
+        color: #666;
+      }
+
+      .ticket-meta {
+        margin-top: 6px;
+        font-size: 10px;
+        color: #888;
+      }
+    }
+
+    .ticket-divider {
+      border: none;
+      border-top: 1px dashed #aaa;
+      margin: 10px 0;
+    }
+
+    .ticket-body {
+      .ticket-items-table {
+        margin-bottom: 12px;
+
+        .ticket-col-head {
+          display: flex;
+          justify-content: space-between;
+          font-size: 11px;
+          font-weight: 800;
+          padding-bottom: 4px;
+          border-bottom: 1px solid #222;
+        }
+
+        .ticket-item-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 11px;
+          padding: 4px 0;
+          border-bottom: 1px dotted #e0e0e0;
+
+          .col-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .col-price {
+            font-weight: 700;
+            margin-left: 8px;
+          }
+        }
+      }
+
+      .ticket-totals-section {
+        .ticket-summary-line {
+          display: flex;
+          justify-content: space-between;
+          font-size: 12px;
+          padding: 3px 0;
+
+          &.total-line {
+            font-size: 15px;
+            font-weight: 900;
+            border-top: 1px solid #111;
+            padding-top: 6px;
+            margin-top: 4px;
+          }
+
+          &.savings-line {
+            color: #2e7d32;
+            font-weight: 800;
+          }
+        }
+      }
+
+      .ticket-barcode-mock {
+        text-align: center;
+        margin: 16px 0 10px;
+
+        .barcode-lines {
+          font-family: monospace;
+          letter-spacing: -2px;
+          font-weight: 900;
+          font-size: 18px;
+          color: #111;
+          user-select: none;
+        }
+
+        .barcode-number {
+          font-size: 10px;
+          color: #666;
+          letter-spacing: 2px;
+          margin-top: 2px;
+        }
+      }
+    }
+
+    .ticket-footer-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+
+      ion-button {
+        flex: 1;
+        --border-radius: 8px;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
