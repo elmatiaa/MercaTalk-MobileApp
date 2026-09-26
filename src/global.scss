@@ -113,3 +113,43 @@ ion-fab-button:active {
     }
   }
 }
+
+.smart-switch-toast { --background: rgba(30, 41, 59, 0.95); --color: #f8fafc; --border-radius: 12px; --box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-align: center; font-weight: 500; font-size: 14px; margin-bottom: 20px; }
+.smart-switch-toast::part(button) { color: #38bdf8; font-weight: bold; font-size: 13px; }
+
+body { top: 0px !important; }
+.skiptranslate { display: none !important; }
+#goog-gt-tt { display: none !important; }
+.goog-te-banner-frame { display: none !important; }
+.goog-te-balloon-frame { display: none !important; }
+.goog-text-highlight { background-color: transparent !important; border: none !important; box-shadow: none !important; }
+
+iframe.goog-te-banner-frame { display: none !important; pointer-events: none !important; }
+iframe.goog-te-menu-frame { display: none !important; pointer-events: none !important; }
+
+
+#goog-gt-tt, .goog-te-balloon-frame { display: none !important; pointer-events: none !important; }
+body { position: static !important; min-height: 100vh !important; top: 0px !important; }
+
+body { margin-top: 0px !important; }
+.goog-te-spinner-pos { top: auto !important; bottom: 20px !important; left: auto !important; right: 20px !important; pointer-events: none !important; z-index: 99999 !important; transform: scale(0.6) !important; display: block !important; visibility: visible !important; opacity: 0.7 !important; }
+
+
+
+.goog-te-gadget { display: none !important; opacity: 0 !important; visibility: hidden !important; width: 0 !important; height: 0 !important; overflow: hidden !important; }
+
+body > .skiptranslate { display: none !important; }
+body > iframe.skiptranslate { display: none !important; }
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-ZVi9od-ORhb-OEVmcd, [class^="VIpgJd-"] { display: none !important; opacity: 0 !important; pointer-events: none !important; }
+div[id^="goog-"] { display: none !important; }
+
+/* Hide ALL Google Translate injected elements */
+.skiptranslate { display: none !important; }
+.VIpgJd-ZVi9od-ORhb-OEVmcd, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-j7LFlb { display: none !important; }
+[class*="VIpgJd"] { display: none !important; }
+#goog-gt-tt, #goog-gt-vt { display: none !important; }
+.goog-te-spinner-pos, .goog-te-spinner-animation, .goog-te-spinner { display: none !important; }
+.goog-te-banner-frame { display: none !important; }
+
+/* Fix body displacement */
+body { top: 0px !important; position: static !important; min-height: 100vh !important; margin-top: 0px !important; }

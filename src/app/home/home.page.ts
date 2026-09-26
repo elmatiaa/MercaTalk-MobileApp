@@ -14,7 +14,7 @@ import {
   informationCircle, calculator, cart, bagCheck,
   chevronDown, apps, map, pricetags, chatbubbleEllipses, checkmarkCircle, ellipsisHorizontal,
   scanOutline, cartOutline, pricetagOutline, qrCode, cube, chevronForward, listOutline,
-  arrowForwardOutline
+  arrowForwardOutline, barcodeOutline
 } from 'ionicons/icons';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -119,7 +119,8 @@ export class HomePage implements OnInit, OnDestroy {
       cube,
       'chevron-forward': chevronForward,
       'list-outline': listOutline,
-      'arrow-forward-outline': arrowForwardOutline
+      'arrow-forward-outline': arrowForwardOutline,
+      'barcode-outline': barcodeOutline
     });
   }
 
@@ -364,6 +365,9 @@ export class HomePage implements OnInit, OnDestroy {
       this.currentLanguageObj = selected;
       if (!this.isInConversation) {
         this.chatMessage = selected.greeting;
+      }
+      if (typeof (window as any).changeGoogleTranslateLanguage === 'function') {
+        (window as any).changeGoogleTranslateLanguage(languageId);
       }
     }
     this.showSelector = false;

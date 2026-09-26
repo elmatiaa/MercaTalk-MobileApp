@@ -17,7 +17,8 @@ import {
   chevronDownOutline, chevronUpOutline, chatbubblesOutline, sendOutline,
   micOutline, micOffOutline, volumeHighOutline, volumeMuteOutline,
   bulbOutline, compassOutline, sparkles,
-  downloadOutline, shareSocialOutline, checkmarkDone, trophyOutline, playCircleOutline
+  downloadOutline, shareSocialOutline, checkmarkDone, trophyOutline, playCircleOutline,
+  eyeOutline, eyeOffOutline
 } from 'ionicons/icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import { ProductsService, Product } from '../services/products';
@@ -62,6 +63,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   isScanning: boolean = false;
   isWeb: boolean = false;
   editIndex?: number;
+  currentBudgetName: string = '';
 
   // Modo de escaneo continuo
   continuousScan: boolean = true;
@@ -166,7 +168,9 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       'share-social-outline': shareSocialOutline,
       'checkmark-done': checkmarkDone,
       'trophy-outline': trophyOutline,
-      'play-circle-outline': playCircleOutline
+      'play-circle-outline': playCircleOutline,
+      'eye-outline': eyeOutline,
+      'eye-off-outline': eyeOffOutline
     });
     this.isWeb = !Capacitor.isNativePlatform();
   }
@@ -213,6 +217,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       const budgetsArray = JSON.parse(previousSaved);
       if (budgetsArray[index]) {
         const data = budgetsArray[index];
+        this.currentBudgetName = data.name || '';
         this.budget = data.budget;
         this.totalSpent = data.totalSpent;
         this.scannedItems = data.items;
@@ -481,8 +486,8 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     return this.productsService.getSmartSwitchAlternative(item);
   }
 
-  applySmartSwitch(index: number) {
-    const currentItem = this.scannedItems[index];
+  async applySmartSwitch(index: number) {
+    const currentItem = { ...this.scannedItems[index] };
     const suggestion = this.getSmartSwitchForProduct(currentItem);
     if (!suggestion) return;
 
@@ -499,12 +504,49 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       quantity: qty
     };
 
-    this.totalSpent -= (oldPrice * qty);
-    this.totalSpent += (newPrice * qty);
+    if (!currentItem.hidden) {
+      this.totalSpent -= (oldPrice * qty);
+      this.totalSpent += (newPrice * qty);
+    }
     this.totalSavingsAccumulated += totalSaving;
 
     this.updateChart();
-    this.presentToast(`¡Smart Switch aplicado! Ahorraste $${totalSaving.toLocaleString('es-CL')}`);
+    
+    const toast = await this.toastController.create({
+      message: `Producto cambiado. Ahorraste $${totalSaving.toLocaleString('es-CL')}`,
+      duration: 5000,
+      position: 'bottom',
+      color: 'dark',
+      cssClass: 'smart-switch-toast',
+      buttons: [
+        {
+          text: 'REVERTIR',
+          role: 'cancel',
+          handler: () => {
+            this.revertSmartSwitch(index, currentItem, totalSaving);
+          }
+        }
+      ]
+    });
+    await toast.present();
+  }
+
+  revertSmartSwitch(index: number, originalItem: any, savingsToRevert: number) {
+    const altItem = this.scannedItems[index];
+    const oldPrice = (originalItem.inOffer && originalItem.offerPrice) ? originalItem.offerPrice : originalItem.price;
+    const newPrice = (altItem.inOffer && altItem.offerPrice) ? altItem.offerPrice : altItem.price;
+    const qty = originalItem.quantity || 1;
+
+    this.scannedItems[index] = originalItem;
+
+    if (!originalItem.hidden) {
+      this.totalSpent -= (newPrice * qty);
+      this.totalSpent += (oldPrice * qty);
+    }
+    this.totalSavingsAccumulated -= savingsToRevert;
+
+    this.updateChart();
+    this.presentToast('Cambio revertido. Producto original restaurado.');
   }
 
   // FASE 2 INNOVACIÓN: CHECKLIST PRE-SUPERMERCADO
@@ -663,7 +705,8 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
             datasets: [{
               data: [1],
               backgroundColor: ['#e0e0e0'],
-              borderWidth: 1
+              borderWidth: 1,
+              borderColor: '#ffffff'
             }]
           }
         };
@@ -682,11 +725,21 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  categoryBreakdown: CategorySummary[] = [];
+
   updateChart() {
+    this.categoryBreakdown = this.calculateCategoryBreakdown();
     if (this.chart) {
       const config = this.getChartConfig();
       this.chart.data.labels = config.data.labels;
-      this.chart.data.datasets = config.data.datasets;
+      if (this.chart.data.datasets && this.chart.data.datasets.length > 0 && config.data.datasets.length > 0) {
+        this.chart.data.datasets[0].data = config.data.datasets[0].data;
+        this.chart.data.datasets[0].backgroundColor = config.data.datasets[0].backgroundColor;
+        this.chart.data.datasets[0].borderColor = config.data.datasets[0].borderColor;
+        this.chart.data.datasets[0].borderWidth = config.data.datasets[0].borderWidth;
+      } else {
+        this.chart.data.datasets = config.data.datasets;
+      }
       this.chart.update();
     }
   }
@@ -705,11 +758,12 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     return 'success';
   }
 
-  getCategoryBreakdown(): CategorySummary[] {
+  calculateCategoryBreakdown(): CategorySummary[] {
     if (this.totalSpent <= 0 || this.scannedItems.length === 0) return [];
     const map = new Map<string, number>();
 
     for (const item of this.scannedItems) {
+      if (item.hidden) continue;
       const cat = item.category || 'Otros';
       const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
       const itemTotal = price * (item.quantity || 1);
@@ -724,6 +778,10 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
         color: this.categoryColors[category] || this.categoryColors['Otros']
       }))
       .sort((a, b) => b.total - a.total);
+  }
+
+  getCategoryBreakdown(): CategorySummary[] {
+    return this.categoryBreakdown;
   }
 
   getHealthyProductsCount(): number {
@@ -948,7 +1006,9 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     if (!item.quantity) item.quantity = 1;
     item.quantity++;
     const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
-    this.totalSpent += price;
+    if (!item.hidden) {
+      this.totalSpent += price;
+    }
     this.updateChart();
   }
 
@@ -959,7 +1019,9 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     if (item.quantity > 1) {
       item.quantity--;
       const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
-      this.totalSpent -= price;
+      if (!item.hidden) {
+        this.totalSpent -= price;
+      }
       this.updateChart();
     } else {
       this.removeItem(index);
@@ -970,10 +1032,29 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     const item = this.scannedItems[index];
     if (!item.quantity) item.quantity = 1;
     const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
-    this.totalSpent -= price * item.quantity;
+    
+    if (!item.hidden) {
+      this.totalSpent -= price * item.quantity;
+    }
     
     this.scannedItems.splice(index, 1);
     this.updateChart();
+  }
+
+  toggleHideItem(index: number) {
+    const item = this.scannedItems[index];
+    item.hidden = !item.hidden;
+    const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
+    const itemTotal = price * (item.quantity || 1);
+    
+    if (item.hidden) {
+      this.totalSpent -= itemTotal;
+    } else {
+      this.totalSpent += itemTotal;
+    }
+    
+    this.updateChart();
+    this.syncChecklistWithItems();
   }
 
   async confirmClearCart() {
@@ -1011,37 +1092,64 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async saveBudget() {
-    const savedData = {
-      date: new Date().toISOString(),
-      budget: this.budget,
-      totalSpent: this.totalSpent,
-      totalSavingsAccumulated: this.totalSavingsAccumulated,
-      selectedCardDiscount: this.selectedCardDiscount,
-      discountAmount: this.getDiscountAmount(),
-      finalTotalToPay: this.getFinalTotalToPay(),
-      items: this.scannedItems
-    };
+    
+      const alertPrompt = await this.alertController.create({
+        header: 'Guardar Lista',
+        message: 'Ingresa un nombre para tu lista (opcional):',
+        inputs: [
+          {
+            name: 'listName',
+            type: 'text',
+            value: this.currentBudgetName,
+            placeholder: 'Ej. Cumpleaños, Asado, Mensual...'
+          }
+        ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { 
+          text: 'Guardar', 
+          handler: async (data) => {
+            const finalName = data.listName && data.listName.trim() !== '' 
+              ? data.listName.trim() 
+              : `Compra del ${new Date().toLocaleDateString('es-CL')}`;
+            
+            const savedData = {
+              name: finalName,
+              date: new Date().toISOString(),
+              budget: this.budget,
+              totalSpent: this.totalSpent,
+              totalSavingsAccumulated: this.totalSavingsAccumulated,
+              selectedCardDiscount: this.selectedCardDiscount,
+              discountAmount: this.getDiscountAmount(),
+              finalTotalToPay: this.getFinalTotalToPay(),
+              items: this.scannedItems
+            };
 
-    const previousSaved = localStorage.getItem('liderin_budgets');
-    let budgetsArray = [];
-    if (previousSaved) {
-      budgetsArray = JSON.parse(previousSaved);
-    }
+            const previousSaved = localStorage.getItem('liderin_budgets');
+            let budgetsArray = [];
+            if (previousSaved) {
+              budgetsArray = JSON.parse(previousSaved);
+            }
 
-    if (this.editIndex !== undefined && this.editIndex !== null) {
-      budgetsArray[this.editIndex] = savedData;
-    } else {
-      budgetsArray.push(savedData);
-    }
-    localStorage.setItem('liderin_budgets', JSON.stringify(budgetsArray));
+            if (this.editIndex !== undefined && this.editIndex !== null) {
+              budgetsArray[this.editIndex] = savedData;
+            } else {
+              budgetsArray.push(savedData);
+            }
+            localStorage.setItem('liderin_budgets', JSON.stringify(budgetsArray));
 
-    const alert = await this.alertController.create({
-      header: '¡Presupuesto Guardado!',
-      message: `Se ha guardado tu lista con ${this.getTotalItemsCount()} productos y total a pagar de $${this.getFinalTotalToPay().toLocaleString('es-CL')}.`,
-      buttons: ['OK']
+            const successAlert = await this.alertController.create({
+              header: '¡Presupuesto Guardado!',
+              message: `Se ha guardado tu lista "${finalName}" con ${this.getTotalItemsCount()} productos y total a pagar de ${this.getFinalTotalToPay().toLocaleString('es-CL')}.`,
+              buttons: ['OK']
+            });
+
+            await successAlert.present();
+          }
+        }
+      ]
     });
-
-    await alert.present();
+    await alertPrompt.present();
   }
 
   // FASE 5: DEMO PITCH MODE (Simulación para Ingenieros Comerciales e Inversionistas)

@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
+  <meta name="google" content="notranslate">
   <meta charset="utf-8" />
   <title>Ionic App</title>
 
@@ -21,6 +22,32 @@
 
 <body>
   <app-root></app-root>
-</body>
 
+  <!-- Google Translate Widget (Hidden) -->
+  <div style="position: absolute; top: -10000px; left: -10000px; width: 0; height: 0; overflow: hidden; opacity: 0; pointer-events: none;"><div id="google_translate_element"></div></div>
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'es', 
+        includedLanguages: 'es,en,pt', 
+        autoDisplay: false
+      }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+  <script type="text/javascript">
+    window.changeGoogleTranslateLanguage = function(langCode) {
+      setTimeout(() => {
+        const selectEl = document.querySelector('select.goog-te-combo');
+        if (selectEl) {
+          selectEl.value = langCode;
+          selectEl.dispatchEvent(new Event('change'));
+        }
+      }, 500);
+    };
+  </script>
+</body>
 </html>
+
+

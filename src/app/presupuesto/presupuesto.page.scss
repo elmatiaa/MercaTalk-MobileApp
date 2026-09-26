@@ -812,7 +812,26 @@ ion-content {
     gap: 14px;
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(226, 232, 240, 0.8);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+
+    &.is-hidden {
+      opacity: 0.6;
+      border-color: #cbd5e1;
+      background: #f8fafc;
+      
+      .product-title-row h4 {
+        text-decoration: line-through;
+        color: #64748b;
+      }
+      .price-box {
+        opacity: 0.7;
+        text-decoration: line-through;
+      }
+      .product-image-box img {
+        filter: grayscale(100%);
+        opacity: 0.7;
+      }
+    }
 
     &:active {
       transform: scale(0.995);
@@ -833,7 +852,7 @@ ion-content {
         width: 100%;
         height: 100%;
         object-fit: contain;
-        transition: transform 0.25s ease;
+        transition: transform 0.25s ease, filter 0.25s ease;
       }
 
       .offer-tag {
@@ -864,6 +883,30 @@ ion-content {
           font-weight: 700;
           color: #0f172a;
           line-height: 1.25;
+          transition: color 0.2s ease;
+        }
+        
+        .item-visibility-btn {
+          background: #f1f5f9;
+          border: none;
+          color: #0ea5e9;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          cursor: pointer;
+          transition: background 0.2s, color 0.2s;
+          
+          ion-icon.ignored {
+            color: #94a3b8;
+          }
+
+          &:active {
+            transform: scale(0.9);
+          }
         }
 
         .item-delete-btn {

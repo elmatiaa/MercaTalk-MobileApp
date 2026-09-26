@@ -184,7 +184,7 @@
   <div class="savings-banner" *ngIf="totalSavingsAccumulated > 0">
     <ion-icon name="sparkles-outline"></ion-icon>
     <div class="savings-text">
-      <strong>¡Has ahorrado ${{ totalSavingsAccumulated | number }} en esta compra!</strong>
+          ¡Has ahorrado {{ ((budget || 0) - totalSpent) | number }}!
       <span>Gracias a las recomendaciones Smart Switch de marca propia.</span>
     </div>
   </div>
@@ -284,7 +284,7 @@
     </div>
 
     <!-- Items escaneados -->
-    <div class="product-item-card" *ngFor="let item of scannedItems; let i = index">
+    <div class="product-item-card" *ngFor="let item of scannedItems; let i = index" [class.is-hidden]="item.hidden">
       <div class="product-image-box">
         <img [src]="item.image || 'assets/icon/favicon.png'" [alt]="item.name" onerror="this.src='assets/icon/favicon.png'">
         <span class="offer-tag" *ngIf="item.inOffer">Oferta</span>
@@ -293,9 +293,14 @@
       <div class="product-details">
         <div class="product-title-row">
           <h4>{{ item.name }}</h4>
-          <button class="item-delete-btn" (click)="removeItem(i)" aria-label="Eliminar">
-            <ion-icon name="close"></ion-icon>
-          </button>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="item-visibility-btn" (click)="toggleHideItem(i)" [attr.aria-label]="item.hidden ? 'Mostrar' : 'Ocultar'" [title]="item.hidden ? 'Incluir en presupuesto' : 'Excluir del presupuesto'">
+              <ion-icon [name]="item.hidden ? 'eye-off-outline' : 'eye-outline'" [class.ignored]="item.hidden"></ion-icon>
+            </button>
+            <button class="item-delete-btn" (click)="removeItem(i)" aria-label="Eliminar">
+              <ion-icon name="close"></ion-icon>
+            </button>
+          </div>
         </div>
         
         <div class="product-meta">
@@ -368,7 +373,7 @@
     <div class="hud-total">${{ getFinalTotalToPay() | number }}</div>
     <div class="hud-subtext" [ngClass]="getBudgetStatusColor()">
       <span *ngIf="getFinalTotalToPay() <= budget">Te quedan ${{ (budget - getFinalTotalToPay()) | number }}</span>
-      <span *ngIf="getFinalTotalToPay() > budget">¡Excedido por ${{ (getFinalTotalToPay() - budget) | number }}!</span>
+          ¡Excedido por {{ (totalSpent - (budget || 0)) | number }}!
     </div>
   </div>
 
@@ -672,4 +677,5 @@
     </div>
   </div>
 </div>
+
 

@@ -8,20 +8,20 @@
     
     <div class="header-actions">
       <!-- Botón Píldora Elegante Modo Pitch -->
-      <button class="top-pitch-pill" (click)="startPitchDemo()" title="Simulación para Inversionistas">
+      <button class="top-pitch-pill notranslate" (click)="startPitchDemo()" title="Simulación para Inversionistas">
         <ion-icon name="sparkles"></ion-icon>
         <span>Demo Pitch</span>
       </button>
 
       <!-- Selector desplegable de Idioma -->
-      <div class="supermarket-selector" (click)="toggleSelector()">
+      <div class="supermarket-selector notranslate" (click)="toggleSelector()">
         <img [src]="currentLanguageObj.image" class="flag-icon">
         <span>{{ currentLanguageObj.name }}</span>
         <ion-icon name="chevron-down"></ion-icon>
       </div>
 
       <!-- Menú desplegable -->
-      <div class="dropdown-menu" *ngIf="showSelector">
+      <div class="dropdown-menu notranslate" *ngIf="showSelector">
         <div class="dropdown-header">
           IDIOMA
           <span>Selecciona tu idioma preferido</span>
