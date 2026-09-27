@@ -25,6 +25,7 @@ import { ProductsService, Product } from '../services/products';
 import { ChatService } from '../services/chat.service';
 import { WALMART_RECIPES } from '../data/recipes.data';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { SupermarketService, Supermarket } from '../services/supermarket.service';
 
 Chart.register(...registerables);
 
@@ -55,6 +56,7 @@ export interface ChatMsg {
   imports: [IonicModule, CommonModule, FormsModule, RouterModule]
 })
 export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
+  currentSupermarket!: Supermarket;
   budget: number = 15000;
   totalSpent: number = 0;
   totalSavingsAccumulated: number = 0;
@@ -121,7 +123,8 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     private chatService: ChatService,
     private toastController: ToastController,
     private alertController: AlertController,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    public supermarketService: SupermarketService
   ) {
     addIcons({ 
       'barcode-outline': barcodeOutline, 
@@ -178,6 +181,9 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   showPitchExecutiveModal: boolean = false;
 
   ngOnInit() {
+    this.supermarketService.currentSupermarket$.subscribe(s => {
+      this.currentSupermarket = s;
+    });
     this.allProducts = this.productsService.getAllProducts();
     this.loadChecklist();
     this.initSpeechRecognition();

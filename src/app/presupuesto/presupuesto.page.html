@@ -153,13 +153,13 @@
         class="loyalty-chip" 
         [class.selected]="selectedCardDiscount === 'lider_bci'"
         (click)="setCardDiscount('lider_bci')">
-        💳 Líder Bci (-6%)
+        💳 {{ currentSupermarket?.cardDiscount?.name || 'Tarjeta (-6%)' }}
       </button>
       <button 
         class="loyalty-chip" 
         [class.selected]="selectedCardDiscount === 'club_lider'"
         (click)="setCardDiscount('club_lider')">
-        🎁 Mi Club Líder (-3%)
+        🎁 Club {{ currentSupermarket?.name }} (-3%)
       </button>
     </div>
 
@@ -192,10 +192,10 @@
   <!-- FASE 3: BOTÓN DE ACCESO AL ASISTENTE DE COMPRA -->
   <div class="assistant-prompt-bar" (click)="openAssistantModal()">
     <div class="bot-avatar-ring">
-      <img src="assets/images/liderin.png" onerror="this.src='assets/icon/favicon.png'" alt="Avatar">
+      <img [src]="currentSupermarket?.mascot?.image || 'assets/images/liderin.png'" onerror="this.src='assets/icon/favicon.png'" [alt]="currentSupermarket?.mascot?.name">
     </div>
     <div class="bot-prompt-text">
-      <strong>¿Dudas de recetas, pasillos o presupuesto?</strong>
+      <strong>¿Dudas con {{ currentSupermarket?.mascot?.name }}?</strong>
       <span>Toca aquí para consultar al asistente en vivo</span>
     </div>
     <ion-icon name="chatbubbles-outline" class="bubble-icon"></ion-icon>
@@ -518,12 +518,12 @@
     <div class="assistant-sheet-header">
       <div class="assistant-profile">
         <div class="assistant-avatar-badge">
-          <img src="assets/images/liderin.png" onerror="this.src='assets/icon/favicon.png'" alt="Avatar">
+          <img [src]="currentSupermarket?.mascot?.image || 'assets/images/liderin.png'" onerror="this.src='assets/icon/favicon.png'" [alt]="currentSupermarket?.mascot?.name">
           <span class="online-indicator"></span>
         </div>
         <div class="assistant-meta">
-          <h3>MercaTalk Bot</h3>
-          <span>Tu copiloto de compras en tienda</span>
+          <h3>MercaTalk • {{ currentSupermarket?.mascot?.name || 'Bot' }}</h3>
+          <span>Asistente virtual {{ currentSupermarket?.name }}</span>
         </div>
       </div>
       <div class="assistant-header-actions">

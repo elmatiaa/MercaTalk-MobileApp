@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="tottusBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00a650" />
+      <stop offset="100%" stop-color="#00662b" />
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a4d65e" />
+      <stop offset="100%" stop-color="#78be20" />
+    </linearGradient>
+  </defs>
+  <!-- Circle Avatar Base -->
+  <circle cx="60" cy="60" r="56" fill="url(#tottusBg)" stroke="#ffffff" stroke-width="4" />
+  
+  <!-- Friendly Tottín Mascot Character -->
+  <!-- Body/Head -->
+  <circle cx="60" cy="58" r="32" fill="#ffffff" />
+  
+  <!-- Green Ears / Leaves on Top -->
+  <path d="M 52 28 C 45 15, 60 12, 58 26 Z" fill="url(#leafGrad)" />
+  <path d="M 68 28 C 75 15, 60 12, 62 26 Z" fill="url(#leafGrad)" />
+  <circle cx="60" cy="27" r="4" fill="#a4d65e" />
+
+  <!-- Eyes -->
+  <circle cx="50" cy="54" r="4" fill="#222222" />
+  <circle cx="70" cy="54" r="4" fill="#222222" />
+  <circle cx="51.5" cy="52.5" r="1.5" fill="#ffffff" />
+  <circle cx="71.5" cy="52.5" r="1.5" fill="#ffffff" />
+
+  <!-- Cheeks -->
+  <ellipse cx="43" cy="60" rx="4" ry="2.5" fill="#ff9999" opacity="0.7" />
+  <ellipse cx="77" cy="60" rx="4" ry="2.5" fill="#ff9999" opacity="0.7" />
+
+  <!-- Big Happy Smile -->
+  <path d="M 47 62 Q 60 74 73 62" fill="none" stroke="#00662b" stroke-width="3.5" stroke-linecap="round" />
+
+  <!-- Shopping Bag Icon below -->
+  <path d="M 46 80 L 74 80 L 71 98 L 49 98 Z" fill="#78be20" />
+  <path d="M 53 80 C 53 74, 67 74, 67 80" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" />
+  <text x="60" y="93" font-family="Arial, sans-serif" font-weight="900" font-size="8" fill="#ffffff" text-anchor="middle">TOTTUS</text>
+</svg>

@@ -34,10 +34,57 @@
 
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
 body.scanner-active { --ion-background-color: transparent !important; background: transparent !important; } 
- 
-/* ===== MODERN BUTTONS GLOBALLY ===== */
+
+/* ===== SUPERMARKET DYNAMIC THEME SYSTEM ===== */
+:root {
+  --primary-color: #0071ce;
+  --primary-brand: #0071ce;
+  --secondary-color: #004b99;
+  --highlight-color: #ffc220;
+  --dark-color: #1e293b;
+  --bg-color: #f5f6f9;
+  --bg-surface: #f7f9fc;
+  --hero-gradient: linear-gradient(135deg, #0071ce 0%, #004b99 50%, #002d6b 100%);
+  --ion-color-primary: var(--primary-color);
+}
+
+body.theme-lider {
+  --primary-color: #0071ce;
+  --primary-brand: #0071ce;
+  --secondary-color: #004b99;
+  --highlight-color: #ffc220;
+  --dark-color: #1e293b;
+  --bg-color: #f5f6f9;
+  --bg-surface: #f7f9fc;
+  --hero-gradient: linear-gradient(135deg, #0071ce 0%, #004b99 50%, #002d6b 100%);
+  --ion-color-primary: #0071ce;
+}
+
+body.theme-tottus {
+  --primary-color: #008539;
+  --primary-brand: #008539;
+  --secondary-color: #00662b;
+  --highlight-color: #78be20;
+  --dark-color: #222222;
+  --bg-color: #f4f7f4;
+  --bg-surface: #f4f7f4;
+  --hero-gradient: linear-gradient(135deg, #008539 0%, #00662b 50%, #00421c 100%);
+  --ion-color-primary: #008539;
+}
+
+body.theme-santaisabel {
+  --primary-color: #e30613;
+  --primary-brand: #e30613;
+  --secondary-color: #b8000a;
+  --highlight-color: #ffcc00;
+  --dark-color: #222222;
+  --bg-color: #fbf6f6;
+  --bg-surface: #fbf6f6;
+  --hero-gradient: linear-gradient(135deg, #e30613 0%, #b8000a 50%, #7a0006 100%);
+  --ion-color-primary: #e30613;
+}
+
 ion-button {
   --border-radius: 14px;
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);

@@ -24,6 +24,7 @@ import { ChatService, ApiResponse } from '../services/chat.service';
 import { ProductsService, Product } from '../services/products';
 import { RecipesService, Recipe } from '../services/recipes.service';
 import { OffersService, Offer } from '../services/offers.service';
+import { SupermarketService, Supermarket } from '../services/supermarket.service';
 
 @Component({
   selector: 'app-home',
@@ -64,6 +65,10 @@ export class HomePage implements OnInit, OnDestroy {
   chatMessage = this.currentLanguageObj.greeting;
   showChatInput = false;
   showSelector = false;
+  showSupermarketSelector = false;
+
+  supermarkets: Supermarket[] = [];
+  currentSupermarket!: Supermarket;
 
   // PROPIEDADES PARA CONTROLAR CONVERSACIÓN
   isInConversation = false;
@@ -74,14 +79,15 @@ export class HomePage implements OnInit, OnDestroy {
   isListening = false;
   isSpeaking = false;
   speechSupported = false;
-  isMuted = false; // 🆕 NUEVA PROPIEDAD PARA SILENCIAR
+  isMuted = false;
 
   constructor(
     private router: Router,
     private chatService: ChatService,
     private productsService: ProductsService,
     private recipesService: RecipesService,
-    private offersService: OffersService
+    private offersService: OffersService,
+    public supermarketService: SupermarketService
   ) {
     addIcons({
       chatbubbles,
@@ -132,6 +138,22 @@ export class HomePage implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.checkSpeechSupport();
+    this.supermarkets = this.supermarketService.getSupermarketList();
+    this.supermarketService.currentSupermarket$.subscribe(s => {
+      this.currentSupermarket = s;
+    });
+  }
+
+  toggleSupermarketSelector() {
+    this.showSupermarketSelector = !this.showSupermarketSelector;
+    if (this.showSupermarketSelector) {
+      this.showSelector = false;
+    }
+  }
+
+  selectSupermarket(id: 'lider' | 'tottus' | 'santaisabel') {
+    this.supermarketService.setSupermarket(id);
+    this.showSupermarketSelector = false;
   }
 
   ionViewDidEnter() {

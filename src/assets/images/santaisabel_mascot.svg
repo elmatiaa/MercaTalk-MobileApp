@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="santaBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e30613" />
+      <stop offset="100%" stop-color="#9e0009" />
+    </linearGradient>
+  </defs>
+  <!-- Circle Avatar Base -->
+  <circle cx="60" cy="60" r="56" fill="url(#santaBg)" stroke="#ffffff" stroke-width="4" />
+  
+  <!-- Friendly Elephant Mascot Head (Santi) -->
+  <!-- Elephant Big Ears -->
+  <circle cx="36" cy="54" r="20" fill="#ffffff" stroke="#ffcccc" stroke-width="2" />
+  <circle cx="36" cy="54" r="13" fill="#ffb3b3" opacity="0.6" />
+  <circle cx="84" cy="54" r="20" fill="#ffffff" stroke="#ffcccc" stroke-width="2" />
+  <circle cx="84" cy="54" r="13" fill="#ffb3b3" opacity="0.6" />
+
+  <!-- Elephant Head -->
+  <circle cx="60" cy="56" r="28" fill="#ffffff" />
+
+  <!-- Eyes -->
+  <circle cx="49" cy="50" r="3.5" fill="#222222" />
+  <circle cx="71" cy="50" r="3.5" fill="#222222" />
+  <circle cx="50" cy="49" r="1.2" fill="#ffffff" />
+  <circle cx="72" cy="49" r="1.2" fill="#ffffff" />
+
+  <!-- Elephant Trunk (Trunca alegre curada hacia arriba) -->
+  <path d="M 57 58 C 57 74, 66 74, 66 66 C 66 60, 72 60, 72 64" fill="none" stroke="#e30613" stroke-width="5" stroke-linecap="round" />
+
+  <!-- Cheeks -->
+  <circle cx="42" cy="58" r="3" fill="#ff6666" opacity="0.5" />
+  <circle cx="78" cy="58" r="3" fill="#ff6666" opacity="0.5" />
+
+  <!-- Santa Isabel Red Heart Badge -->
+  <path d="M 60 84 C 54 78, 44 86, 60 98 C 76 86, 66 78, 60 84 Z" fill="#ffcc00" stroke="#e30613" stroke-width="1.5" />
+  <text x="60" y="106" font-family="Arial, sans-serif" font-weight="900" font-size="7" fill="#ffffff" text-anchor="middle">SANTA ISABEL</text>
+</svg>

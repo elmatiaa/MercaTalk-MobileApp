@@ -2,11 +2,36 @@
   <!-- Cabecera Superior -->
   <div class="top-header">
     <div class="logo">
-      <ion-icon name="cart-outline" style="margin-right: 8px; font-size: 24px; color: #0071ce;"></ion-icon> 
-      <strong>MercaTalk</strong>
+      <ion-icon name="cart-outline" style="margin-right: 8px; font-size: 24px;" [style.color]="currentSupermarket.colors.primary"></ion-icon> 
+      <strong>MercaTalk • {{ currentSupermarket.name }}</strong>
     </div>
     
     <div class="header-actions">
+      <!-- BOTÓN CON OPCIONES DE SUPERMERCADO Y MASCOTAS -->
+      <button class="supermarket-selector-pill notranslate" (click)="toggleSupermarketSelector()" [style.border-color]="currentSupermarket.colors.primary">
+        <img [src]="currentSupermarket.mascot.image" class="mascot-pill-icon" [alt]="currentSupermarket.mascot.name">
+        <span>{{ currentSupermarket.name }}</span>
+        <ion-icon name="chevron-down"></ion-icon>
+      </button>
+
+      <!-- MENÚ DESPLEGABLE DE SUPERMERCADOS -->
+      <div class="dropdown-menu supermarket-dropdown notranslate" *ngIf="showSupermarketSelector">
+        <div class="dropdown-header">
+          SUPERMERCADOS Y TEMAS
+          <span>Selecciona supermercado para cambiar colores y mascota</span>
+        </div>
+        <div class="dropdown-item" *ngFor="let shop of supermarkets" (click)="selectSupermarket(shop.id)" [class.selected]="currentSupermarket.id === shop.id">
+          <div class="mascot-option-circle" [style.border-color]="shop.colors.primary">
+            <img [src]="shop.mascot.image" class="mascot-option-img" [alt]="shop.mascot.name">
+          </div>
+          <div class="dropdown-text">
+            <strong>{{ shop.name }}</strong>
+            <span><div class="status-dot-mini" [style.background]="shop.colors.primary"></div>{{ shop.badgeName }} • {{ shop.mascot.name }}</span>
+          </div>
+          <ion-icon name="checkmark-circle" [style.color]="shop.colors.primary" *ngIf="currentSupermarket.id === shop.id"></ion-icon>
+        </div>
+      </div>
+
       <!-- Botón Píldora Elegante Modo Pitch -->
       <button class="top-pitch-pill notranslate" (click)="startPitchDemo()" title="Simulación para Inversionistas">
         <ion-icon name="sparkles"></ion-icon>
@@ -14,13 +39,13 @@
       </button>
 
       <!-- Selector desplegable de Idioma -->
-      <div class="supermarket-selector notranslate" (click)="toggleSelector()">
+      <div class="language-selector notranslate" (click)="toggleSelector()">
         <img [src]="currentLanguageObj.image" class="flag-icon">
         <span>{{ currentLanguageObj.name }}</span>
         <ion-icon name="chevron-down"></ion-icon>
       </div>
 
-      <!-- Menú desplegable -->
+      <!-- Menú desplegable Idioma -->
       <div class="dropdown-menu notranslate" *ngIf="showSelector">
         <div class="dropdown-header">
           IDIOMA
@@ -43,11 +68,11 @@
     <!-- Tarjeta Principal: Iniciar Compra en Supermercado (Hero Action) -->
     <div class="shopping-hero-card" (click)="navigateToPresupuesto()">
       <div class="hero-badge">
-        <span class="pulse-dot"></span> EN TIENDA
+        <span class="pulse-dot"></span> EN TIENDA {{ currentSupermarket.name | uppercase }}
       </div>
       <div class="hero-content">
         <h2>Control de Presupuesto en Vivo</h2>
-        <p>Escanea tus productos con el celular, calcula tu cuenta al instante y evita sorpresas en la caja.</p>
+        <p>Escanea tus productos con el celular en {{ currentSupermarket.name }}, calcula tu cuenta al instante y evita sorpresas en la caja.</p>
       </div>
       <div class="hero-action-footer">
         <div class="hero-cta-button">
