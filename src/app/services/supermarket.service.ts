@@ -141,6 +141,24 @@ export class SupermarketService {
     root.style.setProperty('--secondary-color', s.colors.secondary);
     root.style.setProperty('--highlight-color', s.colors.highlight);
     root.style.setProperty('--dark-color', s.colors.dark);
+    root.style.setProperty('--bg-color', s.colors.bgLight);
+    root.style.setProperty('--bg-surface', s.colors.bgLight);
     root.style.setProperty('--hero-gradient', s.colors.heroGradient);
+
+    // Compute RGB for Ionic CSS variables
+    const hex = s.colors.primary.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const rgbStr = `${r}, ${g}, ${b}`;
+
+    root.style.setProperty('--ion-color-primary', s.colors.primary);
+    root.style.setProperty('--ion-color-primary-rgb', rgbStr);
+    root.style.setProperty('--ion-color-primary-contrast', '#ffffff');
+    root.style.setProperty('--ion-color-primary-shade', s.colors.secondary);
+    root.style.setProperty('--ion-color-primary-tint', s.colors.primary);
+    root.style.setProperty('--ion-color-secondary', s.colors.secondary);
+    root.style.setProperty('--ion-color-tertiary', s.colors.highlight);
+    root.style.setProperty('--ion-color-dark', s.colors.dark);
   }
 }

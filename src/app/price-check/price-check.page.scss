@@ -71,7 +71,7 @@ ion-item {
 
 /* ===== TOOLBAR PRINCIPAL ===== */
 .blue-toolbar {
-  --background: #0071ce;
+  --background: var(--primary-color);
   --min-height: 70px;
   --border-width: 0;
   
@@ -184,7 +184,7 @@ ion-content {
    
     ion-icon {
       font-size: 24px;
-      color: #3880ff;
+      color: var(--primary-color);
     }
    
     h3 {
@@ -292,7 +292,7 @@ ion-content {
         width: 60px;
         height: 60px;
         margin-bottom: 20px;
-        --color: #3880ff;
+        --color: var(--primary-color);
       }
      
       p {
@@ -475,7 +475,7 @@ ion-content {
 
           ion-icon {
             font-size: 18px;
-            color: #3880ff;
+            color: var(--primary-color);
             flex-shrink: 0;
           }
 

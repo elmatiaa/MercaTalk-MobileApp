@@ -1,6 +1,6 @@
 // Barra azul superior
 .blue-toolbar {
-  --background: #0071ce;
+  --background: var(--primary-color);
   --min-height: 70px;
   --border-width: 0;
   
@@ -145,7 +145,7 @@ ion-content {
 
 .add-button {
   width: 100%;
-  background: #0071ce;
+  background: var(--primary-color);
   color: white;
   border: none;
   padding: 10px;
@@ -194,7 +194,7 @@ ion-content {
     font-size: 18px;
   }
 }.blue-toolbar {
-  --background: #0071ce;
+  --background: var(--primary-color);
   --min-height: 70px;
   --border-width: 0;
   

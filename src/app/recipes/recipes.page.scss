@@ -7,7 +7,7 @@
 
 // Navbar igual que ofertas
 .blue-toolbar {
-  --background: #0071ce;
+  --background: var(--primary-color);
   --min-height: 70px;
   --border-width: 0;
   
@@ -267,7 +267,7 @@ ion-content {
   }
 }
 .explanation-banner {
-  background: linear-gradient(135deg, #0071ce 0%, #005a9e 100%);
+  background: var(--hero-gradient);
   border-radius: 12px;
   padding: 20px 25px;
   margin-bottom: 30px;
@@ -536,7 +536,7 @@ ion-content {
           padding-bottom: 6px;
 
           ion-icon {
-            color: #0071ce;
+            color: var(--primary-color);
           }
         }
 
@@ -575,7 +575,7 @@ ion-content {
             .step-num {
               width: 24px;
               height: 24px;
-              background: #0071ce;
+              background: var(--primary-color);
               color: #ffffff;
               border-radius: 50%;
               display: flex;

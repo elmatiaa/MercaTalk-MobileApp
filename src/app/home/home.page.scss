@@ -1,10 +1,6 @@
-/* FORZAR MODO CLARO */
+/* FORZAR MODO CLARO Y TEMA DINÁMICO */
 :host {
   color-scheme: light only;
-  --primary-color: #0071ce;
-  --secondary-color: #0071ce; /* Azul Líder */
-  --highlight-color: #ffc220; /* Amarillo Líder */
-  --bg-color: #f5f6f9;
 }
 
 ion-content {
@@ -253,7 +249,7 @@ ion-content {
     right: -50px;
     width: 200px;
     height: 200px;
-    background: radial-gradient(circle, rgba(0,113,206,0.1) 0%, rgba(255,255,255,0) 70%);
+    background: radial-gradient(circle, rgba(var(--ion-color-primary-rgb), 0.15) 0%, rgba(255,255,255,0) 70%);
     border-radius: 50%;
     z-index: 0;
   }
@@ -322,7 +318,7 @@ ion-content {
 
   .chat-btn {
     width: 100%;
-    background: linear-gradient(90deg, #005a9e, #0071ce); /* Azul Líder */
+    background: var(--hero-gradient);
     color: white;
     border: none;
     border-radius: 12px;
@@ -330,7 +326,7 @@ ion-content {
     display: flex;
     align-items: center;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,113,206,0.3); /* Sombra azul */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.18);
     transition: transform 0.2s;
     position: relative;
     z-index: 1;
@@ -451,7 +447,7 @@ ion-content {
       font-size: 24px;
     }
 
-    &.blue { background: #e3f2fd; color: #1976d2; }
+    &.blue { background: rgba(var(--ion-color-primary-rgb), 0.12); color: var(--primary-color); }
     &.green { background: #e8f5e9; color: #388e3c; }
     &.red { background: #ffebee; color: #d32f2f; }
     &.yellow { background: #fff8e1; color: #f57f17; }
@@ -738,13 +734,13 @@ ion-content {
 
 /* HERO SHOPPING CARD */
 .shopping-hero-card {
-  background: linear-gradient(135deg, #0071ce 0%, #004b99 50%, #002d6b 100%);
+  background: var(--hero-gradient);
   border-radius: 24px;
   padding: 24px;
   margin-bottom: 22px;
   color: #ffffff;
   cursor: pointer;
-  box-shadow: 0 14px 30px rgba(0, 113, 206, 0.32);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -813,7 +809,7 @@ ion-content {
       align-items: center;
       gap: 8px;
       background: #ffffff;
-      color: #0071ce;
+      color: var(--primary-color);
       padding: 11px 20px;
       border-radius: 14px;
       font-size: 14px;
@@ -920,12 +916,12 @@ ion-content {
   .highlight-circle {
     width: 44px;
     height: 44px;
-    background: linear-gradient(135deg, #0071ce 0%, #0056b3 100%);
+    background: var(--hero-gradient);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 16px rgba(0, 113, 206, 0.35);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
     margin-bottom: 2px;
 
     ion-icon {
@@ -936,7 +932,7 @@ ion-content {
   }
 
   span {
-    color: #0071ce;
+    color: var(--primary-color);
     font-weight: 700;
   }
 }
