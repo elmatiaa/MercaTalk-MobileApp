@@ -388,18 +388,28 @@
   </div>
 </div>
 
-<!-- OVERLAY DEL ESCÁNER DE CÁMARA (COMPLETO) -->
+<!-- OVERLAY DEL ESCÁNER DE CÁMARA CONTINUO (COMPLETO) -->
 <div *ngIf="isScanning" class="scanner-container">
   
-  <!-- Banner flotante de feedback en vivo (Modo continuo) -->
-  <div class="live-scan-hud-banner" *ngIf="lastScannedProduct">
-    <ion-icon name="checkmark-circle" class="success-icon"></ion-icon>
-    <div class="hud-product-info">
-      <strong>+1 {{ lastScannedProduct.name }}</strong>
-      <span>${{ lastScannedProduct.price | number }} {{ lastScannedProduct.inOffer ? '(En Oferta)' : '' }}</span>
+  <!-- Barra Superior del Escáner con botón Cancelar -->
+  <div class="scanner-top-bar">
+    <div class="scanner-mode-badge">
+      <span class="live-pulse"></span>
+      <span>Escaneo Continuo Activo</span>
     </div>
-    <div class="hud-cart-quick-total">
-      Carro: ${{ getFinalTotalToPay() | number }}
+    <button class="scanner-cancel-btn" (click)="cancelScanning()" title="Cancelar y salir sin guardar">
+      <ion-icon name="close"></ion-icon>
+      <span>Cancelar</span>
+    </button>
+  </div>
+
+  <!-- Banner flotante de feedback en vivo (último producto detectado) -->
+  <div class="live-scan-hud-banner" *ngIf="lastScannedProduct" [class.unidentified]="!lastScannedProduct.identified">
+    <ion-icon [name]="lastScannedProduct.identified ? 'checkmark-circle' : 'alert-circle-outline'" class="success-icon"></ion-icon>
+    <div class="hud-product-info">
+      <strong>{{ lastScannedProduct.name }}</strong>
+      <span *ngIf="lastScannedProduct.identified">${{ lastScannedProduct.price | number }} {{ lastScannedProduct.inOffer ? '(En Oferta)' : '' }} • Cant: {{ lastScannedProduct.quantity }}</span>
+      <span *ngIf="!lastScannedProduct.identified" class="unrec-sub">⚠️ No identificado en catálogo. Puedes continuar escaneando.</span>
     </div>
   </div>
 
@@ -414,27 +424,78 @@
       <div class="corner top-right"></div>
       <div class="corner bottom-left"></div>
       <div class="corner bottom-right"></div>
-      <div class="scanning-text">Apunta al código de barras</div>
+      <div class="scanning-text">Apunta a los códigos de barra sucesivamente</div>
     </div>
   </div>
 
-  <!-- Panel de control flotante del escáner -->
-  <div class="scanner-floating-panel">
-    <!-- Toggle Modo Continuo -->
-    <div class="scan-mode-toggle" (click)="toggleContinuousScan()">
-      <ion-icon [name]="continuousScan ? 'repeat-outline' : 'flash-outline'"></ion-icon>
-      <span>{{ continuousScan ? 'Modo Continuo (Múltiples compras)' : 'Modo Simple (1 producto)' }}</span>
+  <!-- BANDEJA DE PRODUCTOS DETECTADOS EN TIEMPO REAL -->
+  <div class="temp-detected-tray">
+    <div class="tray-header">
+      <div class="tray-title">
+        <ion-icon name="cart-outline"></ion-icon>
+        <strong>Detectados ({{ getTempScannedCount() }})</strong>
+      </div>
+      <div class="tray-total" *ngIf="tempScannedItems.length > 0">
+        Subtotal: <strong>${{ getTempScannedTotal() | number }}</strong>
+      </div>
     </div>
 
-    <!-- Indicador de total acumulado mientras escaneas -->
-    <div class="scanner-cart-preview">
-      <span>{{ getTotalItemsCount() }} productos en carro</span>
-      <strong>Total: ${{ getFinalTotalToPay() | number }}</strong>
+    <!-- Lista scrollable de items detectados -->
+    <div class="temp-items-list" *ngIf="tempScannedItems.length > 0">
+      <div class="temp-item-card" *ngFor="let item of tempScannedItems; let i = index" [class.item-unidentified]="!item.identified">
+        <div class="temp-item-thumb">
+          <img [src]="item.image || 'assets/icon/favicon.png'" *ngIf="item.identified && item.image" onerror="this.src='assets/icon/favicon.png'" [alt]="item.name">
+          <ion-icon name="alert-circle-outline" *ngIf="!item.identified"></ion-icon>
+          <ion-icon name="barcode-outline" *ngIf="item.identified && !item.image"></ion-icon>
+        </div>
+
+        <div class="temp-item-info">
+          <div class="temp-item-name">{{ item.name }}</div>
+          <div class="temp-item-meta">
+            <span class="temp-price" *ngIf="item.identified">${{ ((item.inOffer && item.offerPrice) ? item.offerPrice : item.price) | number }}</span>
+            <span class="unrec-badge" *ngIf="!item.identified">⚠️ No identificado</span>
+            <span class="temp-brand" *ngIf="item.brand">{{ item.brand }}</span>
+          </div>
+        </div>
+
+        <!-- Controles de cantidad en escáner -->
+        <div class="temp-qty-controls">
+          <button class="qty-btn" (click)="decreaseTempQuantity(i)" [title]="item.quantity === 1 ? 'Quitar' : 'Disminuir'">
+            <ion-icon [name]="item.quantity === 1 ? 'trash-outline' : 'remove-circle-outline'"></ion-icon>
+          </button>
+          <span class="qty-display">{{ item.quantity }}</span>
+          <button class="qty-btn" (click)="increaseTempQuantity(i)" title="Aumentar">
+            <ion-icon name="add-circle-outline"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Botón borrar individual -->
+        <button class="temp-delete-btn" (click)="removeTempItem(i)" title="Eliminar de detectados">
+          <ion-icon name="close"></ion-icon>
+        </button>
+      </div>
     </div>
 
-    <button class="finish-scanning-btn" (click)="stopScan()">
-      <ion-icon name="checkmark-circle"></ion-icon> Listo, volver al carrito
-    </button>
+    <!-- Estado vacío de la bandeja -->
+    <div class="temp-items-empty" *ngIf="tempScannedItems.length === 0">
+      <ion-icon name="barcode-outline"></ion-icon>
+      <span>Apunta la cámara a los códigos de barra. Se irán agregando aquí automáticamente.</span>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="tray-actions-row">
+      <button class="tray-cancel-btn" (click)="cancelScanning()">
+        Cancelar
+      </button>
+      <button 
+        class="tray-confirm-btn" 
+        (click)="confirmScannedProducts()" 
+        [disabled]="tempScannedItems.length === 0"
+        [style.background]="tempScannedItems.length > 0 ? 'var(--hero-gradient)' : '#94a3b8'">
+        <ion-icon name="checkmark-circle"></ion-icon>
+        <span>Confirmar productos ({{ getTempScannedCount() }})</span>
+      </button>
+    </div>
   </div>
 </div>
 

@@ -48,6 +48,21 @@ export interface ChatMsg {
   time: string;
 }
 
+export interface TempScannedItem {
+  id: string | number;
+  barcode: string;
+  name: string;
+  brand: string;
+  category: string;
+  price: number;
+  offerPrice?: number;
+  inOffer?: boolean;
+  image?: string;
+  quantity: number;
+  identified: boolean;
+  unrecognizedCode?: string;
+}
+
 @Component({
   selector: 'app-presupuesto',
   templateUrl: './presupuesto.page.html',
@@ -67,9 +82,10 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   editIndex?: number;
   currentBudgetName: string = '';
 
-  // Modo de escaneo continuo
+  // Modo de escaneo continuo con lista temporal
   continuousScan: boolean = true;
-  lastScannedProduct: { name: string; price: number; inOffer?: boolean; offerPrice?: number; quantity: number } | null = null;
+  tempScannedItems: TempScannedItem[] = [];
+  lastScannedProduct: { name: string; price: number; inOffer?: boolean; offerPrice?: number; quantity: number; identified?: boolean } | null = null;
   private lastScannedCode: string = '';
   private lastScannedTime: number = 0;
   private bannerTimeout: any = null;
@@ -866,8 +882,10 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ESCÁNER
+  // ESCÁNER CONTINUO MULTI-PRODUCTO
   async startScan() {
     this.isScanning = true;
+    this.tempScannedItems = [];
     this.lastScannedCode = '';
     this.lastScannedProduct = null;
     document.body.classList.add('scanner-active');
@@ -890,10 +908,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
             this.lastScannedTime = now;
 
             this.processBarcode(decodedText);
-
-            if (!this.continuousScan) {
-              this.stopScan();
-            }
+            // El escáner permanece abierto para permitir escaneo continuo
           },
           () => {}
         ).catch(err => {
@@ -909,11 +924,19 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
         
         if (status.granted) {
           BarcodeScanner.hideBackground();
-          const result = await BarcodeScanner.startScan();
-
-          if (result.hasContent) {
-            this.processBarcode(result.content);
-            this.stopScan();
+          while (this.isScanning) {
+            const result = await BarcodeScanner.startScan();
+            if (!this.isScanning) break;
+            if (result.hasContent) {
+              const now = Date.now();
+              if (result.content === this.lastScannedCode && (now - this.lastScannedTime) < 1400) {
+                continue;
+              }
+              this.lastScannedCode = result.content;
+              this.lastScannedTime = now;
+              this.processBarcode(result.content);
+              await new Promise(r => setTimeout(r, 600));
+            }
           }
         }
       } catch (error) {
@@ -951,56 +974,150 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     this.continuousScan = !this.continuousScan;
   }
 
+  // PROCESAR CÓDIGO DETECTADO Y AGREGAR A LISTA TEMPORAL
   async processBarcode(code: string) {
     this.playBeepSound();
     this.triggerHaptic();
 
-    const product = this.productsService.findProductByBarcode(code);
-    const existingIndex = this.scannedItems.findIndex(item => item.barcode === code);
-
-    if (existingIndex !== -1) {
-      this.increaseQuantity(existingIndex);
-      const item = this.scannedItems[existingIndex];
-      this.showLiveScanBanner(item.name, item.inOffer && item.offerPrice ? item.offerPrice : item.price, item.quantity, item.inOffer);
+    // 1. Si ya está en la lista temporal de esta sesión, incrementamos cantidad evitando duplicados
+    const existingTempIndex = this.tempScannedItems.findIndex(item => item.barcode === code);
+    if (existingTempIndex !== -1) {
+      this.tempScannedItems[existingTempIndex].quantity++;
+      const item = this.tempScannedItems[existingTempIndex];
+      const effPrice = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
+      this.showLiveScanBanner(item.name, effPrice, item.quantity, item.inOffer, item.identified);
       return;
     }
-    
+
+    // 2. Buscar en catálogo de productos
+    const product = this.productsService.findProductByBarcode(code);
     if (product) {
-      const newProduct = { ...product, quantity: 1 };
-      this.scannedItems.unshift(newProduct);
       const effectivePrice = (product.inOffer && product.offerPrice) ? product.offerPrice : product.price;
-      this.totalSpent += effectivePrice;
-      this.updateChart();
-      this.syncChecklistWithItems();
-      this.showLiveScanBanner(product.name, effectivePrice, 1, product.inOffer);
-    } else {
-      const mockPrice = Math.floor(Math.random() * 2500) + 500;
-      const newItem: any = {
-        id: Date.now(),
-        name: 'Producto ' + code.slice(-4),
-        brand: 'Genérico',
-        category: 'Otros',
-        image: '',
-        code: code,
+      const newTempItem: TempScannedItem = {
+        id: product.id || Date.now(),
         barcode: code,
-        price: mockPrice,
-        quantity: 1
+        name: product.name,
+        brand: product.brand || '',
+        category: product.category || 'Otros',
+        price: product.price,
+        offerPrice: product.offerPrice,
+        inOffer: product.inOffer,
+        image: product.image,
+        quantity: 1,
+        identified: true
       };
-      
-      this.scannedItems.unshift(newItem);
-      this.totalSpent += newItem.price;
-      this.updateChart();
-      this.syncChecklistWithItems();
-      this.showLiveScanBanner(newItem.name, newItem.price, 1);
+      this.tempScannedItems.unshift(newTempItem);
+      this.showLiveScanBanner(product.name, effectivePrice, 1, product.inOffer, true);
+    } else {
+      // 3. Producto no identificado (Requisito 10: mostrar claramente y permitir continuar escaneando)
+      const unrecItem: TempScannedItem = {
+        id: 'unrec_' + Date.now(),
+        barcode: code,
+        name: 'Producto no identificado (' + code.slice(-4) + ')',
+        brand: 'Código ' + code,
+        category: 'Otros',
+        price: 0,
+        quantity: 1,
+        identified: false,
+        unrecognizedCode: code
+      };
+      this.tempScannedItems.unshift(unrecItem);
+      this.showLiveScanBanner('Código ' + code + ' (No identificado)', 0, 1, false, false);
     }
   }
 
-  private showLiveScanBanner(name: string, price: number, quantity: number, inOffer?: boolean) {
-    this.lastScannedProduct = { name, price, quantity, inOffer };
+  private showLiveScanBanner(name: string, price: number, quantity: number, inOffer?: boolean, identified: boolean = true) {
+    this.lastScannedProduct = { name, price, quantity, inOffer, identified };
     if (this.bannerTimeout) clearTimeout(this.bannerTimeout);
     this.bannerTimeout = setTimeout(() => {
       this.lastScannedProduct = null;
-    }, 2500);
+    }, 2800);
+  }
+
+  // GESTIÓN DE ITEMS EN LA BANDEJA TEMPORAL
+  increaseTempQuantity(index: number) {
+    if (this.tempScannedItems[index]) {
+      this.tempScannedItems[index].quantity++;
+    }
+  }
+
+  decreaseTempQuantity(index: number) {
+    if (this.tempScannedItems[index]) {
+      if (this.tempScannedItems[index].quantity > 1) {
+        this.tempScannedItems[index].quantity--;
+      } else {
+        this.removeTempItem(index);
+      }
+    }
+  }
+
+  removeTempItem(index: number) {
+    this.tempScannedItems.splice(index, 1);
+  }
+
+  getTempScannedCount(): number {
+    return this.tempScannedItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+  }
+
+  getTempScannedTotal(): number {
+    return this.tempScannedItems.reduce((sum, item) => {
+      const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
+      return sum + (price * (item.quantity || 1));
+    }, 0);
+  }
+
+  // CANCELAR ESCANEO (Requisito 11: salir sin agregar nada)
+  cancelScanning() {
+    this.tempScannedItems = [];
+    this.stopScan();
+    this.presentToast('Escaneo cancelado. No se agregaron productos.');
+  }
+
+  // CONFIRMAR PRODUCTOS (Requisitos 7, 8, 9: transferir productos detectados y evitar duplicados)
+  confirmScannedProducts() {
+    if (this.tempScannedItems.length === 0) return;
+
+    let addedUnits = 0;
+
+    for (const temp of this.tempScannedItems) {
+      // Requisito 9: evitar duplicados agrupando por código de barra
+      const existingIndex = this.scannedItems.findIndex(i => i.barcode === temp.barcode);
+
+      if (existingIndex !== -1) {
+        this.scannedItems[existingIndex].quantity = (this.scannedItems[existingIndex].quantity || 1) + temp.quantity;
+      } else {
+        this.scannedItems.unshift({
+          id: temp.id,
+          name: temp.name,
+          brand: temp.brand,
+          category: temp.category,
+          price: temp.price,
+          offerPrice: temp.offerPrice,
+          inOffer: temp.inOffer,
+          image: temp.image,
+          code: temp.barcode,
+          barcode: temp.barcode,
+          quantity: temp.quantity
+        });
+      }
+      addedUnits += temp.quantity;
+    }
+
+    this.recalculateTotalSpent();
+    this.updateChart();
+    this.syncChecklistWithItems();
+    this.stopScan();
+    this.presentToast(`✅ ${addedUnits} producto(s) agregados a tu lista`);
+    this.tempScannedItems = [];
+  }
+
+  recalculateTotalSpent() {
+    this.totalSpent = this.scannedItems
+      .filter(item => !item.hidden)
+      .reduce((sum, item) => {
+        const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
+        return sum + (price * (item.quantity || 1));
+      }, 0);
   }
 
   getTotalItemsCount(): number {
@@ -1011,10 +1128,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     const item = this.scannedItems[index];
     if (!item.quantity) item.quantity = 1;
     item.quantity++;
-    const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
-    if (!item.hidden) {
-      this.totalSpent += price;
-    }
+    this.recalculateTotalSpent();
     this.updateChart();
   }
 
@@ -1024,10 +1138,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     
     if (item.quantity > 1) {
       item.quantity--;
-      const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
-      if (!item.hidden) {
-        this.totalSpent -= price;
-      }
+      this.recalculateTotalSpent();
       this.updateChart();
     } else {
       this.removeItem(index);
@@ -1035,16 +1146,10 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   removeItem(index: number) {
-    const item = this.scannedItems[index];
-    if (!item.quantity) item.quantity = 1;
-    const price = (item.inOffer && item.offerPrice) ? item.offerPrice : item.price;
-    
-    if (!item.hidden) {
-      this.totalSpent -= price * item.quantity;
-    }
-    
     this.scannedItems.splice(index, 1);
+    this.recalculateTotalSpent();
     this.updateChart();
+    this.syncChecklistWithItems();
   }
 
   toggleHideItem(index: number) {
