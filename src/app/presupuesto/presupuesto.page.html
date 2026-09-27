@@ -3,9 +3,12 @@
     <button class="back-icon-btn" routerLink="/home" aria-label="Volver">
       <ion-icon name="arrow-back-outline"></ion-icon>
     </button>
-    <div class="top-bar-title">
-      <h2>Presupuesto en Vivo</h2>
-      <span>Control inteligente de compra</span>
+    <div class="top-bar-title" style="display: flex; align-items: center; gap: 8px; text-align: left;">
+      <img [src]="currentSupermarket.logo" class="top-bar-market-logo" [alt]="currentSupermarket.name" *ngIf="currentSupermarket && currentSupermarket.logo">
+      <div>
+        <h2>Presupuesto</h2>
+        <span>{{ currentSupermarket.name }} • En Vivo</span>
+      </div>
     </div>
     <div class="top-bar-actions">
       <button class="pitch-mode-btn" (click)="loadDemoPitchData()" title="Cargar Simulación Pitch">
@@ -522,7 +525,10 @@
           <span class="online-indicator"></span>
         </div>
         <div class="assistant-meta">
-          <h3>MercaTalk • {{ currentSupermarket?.mascot?.name || 'Bot' }}</h3>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <img [src]="currentSupermarket.logo" class="assistant-market-mini-logo" [alt]="currentSupermarket.name" *ngIf="currentSupermarket && currentSupermarket.logo">
+            <h3>MercaTalk • {{ currentSupermarket?.mascot?.name || 'Bot' }}</h3>
+          </div>
           <span>Asistente virtual {{ currentSupermarket?.name }}</span>
         </div>
       </div>

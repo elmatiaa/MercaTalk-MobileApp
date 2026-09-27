@@ -99,11 +99,32 @@ ion-content {
       font-weight: 700;
       color: var(--text-main);
     }
+    .top-bar-market-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: #ffffff;
+      border: 1.5px solid var(--primary-brand);
+      padding: 2px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      flex-shrink: 0;
+    }
+
     span {
       font-size: 11px;
       color: var(--text-muted);
     }
   }
+}
+
+.assistant-market-mini-logo {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  object-fit: contain;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* FASE 2: CHECKLIST INTERACTIVO */

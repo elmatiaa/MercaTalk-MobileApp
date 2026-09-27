@@ -6,6 +6,7 @@ export interface Supermarket {
   name: string;
   badgeName: string;
   tagline: string;
+  logo: string;
   colors: {
     primary: string;
     secondary: string;
@@ -32,6 +33,7 @@ export const SUPERMARKETS: Supermarket[] = [
     name: 'Líder',
     badgeName: 'Walmart Chile',
     tagline: 'Líder - Precios Bajos Siempre',
+    logo: 'assets/images/lider_logo.webp',
     colors: {
       primary: '#0071ce',
       secondary: '#004b99',
@@ -56,6 +58,7 @@ export const SUPERMARKETS: Supermarket[] = [
     name: 'Tottus',
     badgeName: 'Falabella Retail',
     tagline: 'Tottus - Paga Menos, Crece Más',
+    logo: 'assets/images/tottus_logo.png',
     colors: {
       primary: '#008539',
       secondary: '#00662b',
@@ -80,6 +83,7 @@ export const SUPERMARKETS: Supermarket[] = [
     name: 'Santa Isabel',
     badgeName: 'Cencosud',
     tagline: 'Santa Isabel - Te Conviene Siempre',
+    logo: 'assets/images/santaisabel_logo.webp',
     colors: {
       primary: '#e30613',
       secondary: '#b8000a',

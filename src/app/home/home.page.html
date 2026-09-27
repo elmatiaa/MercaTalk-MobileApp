@@ -2,13 +2,19 @@
   <!-- Cabecera Superior -->
   <div class="top-header">
     <div class="logo">
-      <ion-icon name="cart-outline" style="margin-right: 8px; font-size: 24px;" [style.color]="currentSupermarket.colors.primary"></ion-icon> 
-      <strong>MercaTalk • {{ currentSupermarket.name }}</strong>
+      <div class="brand-logo-badge">
+        <img [src]="currentSupermarket.logo" class="top-supermarket-logo" [alt]="currentSupermarket.name">
+      </div>
+      <div class="logo-title-group">
+        <strong>MercaTalk</strong>
+        <span class="sub-supermarket" [style.color]="currentSupermarket.colors.primary">{{ currentSupermarket.name }}</span>
+      </div>
     </div>
     
     <div class="header-actions">
       <!-- BOTÓN CON OPCIONES DE SUPERMERCADO Y MASCOTAS -->
       <button class="supermarket-selector-pill notranslate" (click)="toggleSupermarketSelector()" [style.border-color]="currentSupermarket.colors.primary">
+        <img [src]="currentSupermarket.logo" class="selector-brand-logo" [alt]="currentSupermarket.name">
         <img [src]="currentSupermarket.mascot.image" class="mascot-pill-icon" [alt]="currentSupermarket.mascot.name">
         <span>{{ currentSupermarket.name }}</span>
         <ion-icon name="chevron-down"></ion-icon>
@@ -18,11 +24,16 @@
       <div class="dropdown-menu supermarket-dropdown notranslate" *ngIf="showSupermarketSelector">
         <div class="dropdown-header">
           SUPERMERCADOS Y TEMAS
-          <span>Selecciona supermercado para cambiar colores y mascota</span>
+          <span>Selecciona supermercado para cambiar colores, iconos y mascota</span>
         </div>
         <div class="dropdown-item" *ngFor="let shop of supermarkets" (click)="selectSupermarket(shop.id)" [class.selected]="currentSupermarket.id === shop.id">
-          <div class="mascot-option-circle" [style.border-color]="shop.colors.primary">
-            <img [src]="shop.mascot.image" class="mascot-option-img" [alt]="shop.mascot.name">
+          <div class="dropdown-logos-pair">
+            <div class="brand-logo-circle" [style.border-color]="shop.colors.primary">
+              <img [src]="shop.logo" class="shop-brand-img" [alt]="shop.name">
+            </div>
+            <div class="mascot-option-circle" [style.border-color]="shop.colors.highlight">
+              <img [src]="shop.mascot.image" class="mascot-option-img" [alt]="shop.mascot.name">
+            </div>
           </div>
           <div class="dropdown-text">
             <strong>{{ shop.name }}</strong>
@@ -258,8 +269,10 @@
 <!-- Bottom Tab Bar Simulado (Fijo al fondo) -->
 <div class="custom-tab-bar">
   <div class="tab-btn active">
-    <ion-icon name="person-circle-outline"></ion-icon>
-    <span>Inicio</span>
+    <div class="tab-supermarket-wrapper" [style.border-color]="currentSupermarket.colors.primary">
+      <img [src]="currentSupermarket.logo" class="tab-supermarket-logo" [alt]="currentSupermarket.name">
+    </div>
+    <span>{{ currentSupermarket.name }}</span>
   </div>
   <div class="tab-btn highlight-tab" (click)="navigateToPresupuesto()">
     <div class="highlight-circle">
