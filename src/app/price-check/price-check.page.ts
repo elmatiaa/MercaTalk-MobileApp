@@ -4,7 +4,6 @@ import { Component, OnInit, ViewChild, ElementRef, OnDestroy, NgZone } from '@an
 import { Product, ProductsService } from '../services/products';
 import { 
   IonHeader, 
-  IonToolbar, 
   IonContent, 
   IonButton, 
   IonIcon, 
@@ -18,10 +17,10 @@ import {
 } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 // ZXing
 import { BrowserMultiFormatReader } from '@zxing/library';
+import { NavigationService } from '../services/navigation.service';
 
 @Component({
   selector: 'app-price-checker',
@@ -31,9 +30,7 @@ import { BrowserMultiFormatReader } from '@zxing/library';
   imports: [
     CommonModule, 
     FormsModule, 
-    RouterLink,
     IonHeader, 
-    IonToolbar, 
     IonContent, 
     IonButton, 
     IonIcon, 
@@ -68,9 +65,18 @@ export class PriceCheckerPage implements OnInit, OnDestroy {
   private mediaStream: MediaStream | null = null;
   private scanTimeout: any = null;
 
-  constructor(private productsService: ProductsService, private ngZone: NgZone) {}
+  constructor(
+    private productsService: ProductsService, 
+    private ngZone: NgZone,
+    private navigationService: NavigationService
+  ) {}
 
   ngOnInit() {}
+
+  goBack() {
+    this.stopScanner(false);
+    this.navigationService.back('/home');
+  }
 
   ngOnDestroy() {
     this.stopScanner(false);

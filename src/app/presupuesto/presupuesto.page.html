@@ -1,6 +1,6 @@
 <ion-header class="ion-no-border" [class.ion-hide]="isScanning">
   <div class="modern-top-bar">
-    <button class="back-icon-btn" routerLink="/home" aria-label="Volver">
+    <button class="back-icon-btn" (click)="goBack()" aria-label="Volver">
       <ion-icon name="arrow-back-outline"></ion-icon>
     </button>
     <div class="top-bar-title" style="display: flex; align-items: center; gap: 8px; text-align: left;">

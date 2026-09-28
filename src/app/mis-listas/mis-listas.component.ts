@@ -11,6 +11,7 @@ import { arrowBackOutline, scaleOutline, colorWandOutline, gitCompareOutline, ch
 import { Router } from '@angular/router';
 import { ListComparisonService } from '../services/list-comparison.service';
 import { ProductsService } from '../services/products';
+import { NavigationService } from '../services/navigation.service';
 
 @Component({
   selector: 'app-mis-listas',
@@ -39,7 +40,8 @@ export class MisListasComponent implements OnInit {
     private toastController: ToastController,
     private alertController: AlertController,
     private listComparison: ListComparisonService,
-    private productsService: ProductsService
+    private productsService: ProductsService,
+    private navigationService: NavigationService
   ) {
     addIcons({ 
       'arrow-back-outline': arrowBackOutline,
@@ -108,7 +110,7 @@ export class MisListasComponent implements OnInit {
 
   
     goToLiveBudget(index: number) {
-    this.router.navigate(['/presupuesto'], { queryParams: { index } });
+    this.router.navigate(['/presupuesto'], { queryParams: { index, from: 'mis-listas' } });
   }
 
   editBudget(index: number) {
@@ -145,7 +147,7 @@ export class MisListasComponent implements OnInit {
 
   openRealScanner() {
     this.presentToast('Iniciando Escáner de Código de Barras...');
-    this.router.navigate(['/presupuesto'], { queryParams: { autoScan: 'true' } });
+    this.router.navigate(['/presupuesto'], { queryParams: { autoScan: 'true', from: 'mis-listas' } });
     this.closeEditModal();
   }
 
@@ -254,7 +256,7 @@ export class MisListasComponent implements OnInit {
     });
     await toast.present();
 
-    this.router.navigate(['/presupuesto'], { queryParams: { index: 0 } });
+    this.router.navigate(['/presupuesto'], { queryParams: { index: 0, from: 'mis-listas' } });
   }
 
   async deleteBudget(index: number) {
@@ -443,11 +445,11 @@ export class MisListasComponent implements OnInit {
 
 
   createNew() {
-    this.router.navigate(['/presupuesto']);
+    this.router.navigate(['/presupuesto'], { queryParams: { from: 'mis-listas' } });
   }
 
   goBack() {
-    this.router.navigate(['/home']);
+    this.navigationService.back('/home');
   }
 
   private async presentToast(message: string) {

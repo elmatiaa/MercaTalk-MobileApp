@@ -3,8 +3,9 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonIcon
 } from '@ionic/angular/standalone';
-import { RouterModule } from '@angular/router'; // ← Importar RouterModule
+import { RouterModule } from '@angular/router';
 import { WALMART_OFFERS } from '../data/offers.data';
+import { NavigationService } from '../services/navigation.service';
 
 @Component({
   selector: 'app-offers',
@@ -12,7 +13,7 @@ import { WALMART_OFFERS } from '../data/offers.data';
   styleUrls: ['./offers.page.scss'],
   standalone: true,
   imports: [
-    RouterModule, // ← Añadir esto para routerLink
+    RouterModule,
     IonHeader, IonToolbar, IonTitle, IonContent,
     IonButton, IonIcon
   ]
@@ -20,7 +21,11 @@ import { WALMART_OFFERS } from '../data/offers.data';
 export class OffersPage {
   offers = WALMART_OFFERS;
   
-  constructor() {}
+  constructor(private navigationService: NavigationService) {}
+
+  goBack() {
+    this.navigationService.back('/home');
+  }
 
   addToCart(product: any) {
     console.log('Producto agregado al carrito:', product.product);

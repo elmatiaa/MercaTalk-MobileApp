@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 import { 
-  IonHeader, IonToolbar, IonTitle, IonContent, 
+  IonHeader, IonContent, 
   IonButton, IonInput, IonItem, IonCard, 
   IonCardHeader, IonCardTitle, IonCardContent, IonIcon, 
-  IonButtons, IonBackButton, IonSpinner, IonLabel,
-  IonList, IonChip, IonText, IonCardSubtitle // ✅ AÑADIDO
+  IonSpinner, IonLabel,
+  IonChip, IonText, IonCardSubtitle
 } from '@ionic/angular/standalone';
 import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
 import { ProductsService, Product } from '../services/products';
+import { NavigationService } from '../services/navigation.service';
 
 @Component({
   selector: 'app-store-locator',
@@ -20,11 +21,11 @@ import { ProductsService, Product } from '../services/products';
   styleUrls: ['./store-locator.page.scss'],
   standalone: true,
   imports: [
-    RouterModule, IonHeader, IonToolbar, IonTitle, IonContent,
+    RouterModule, IonHeader, IonContent,
     IonButton, IonInput, IonItem, IonCard, 
     IonCardHeader, IonCardTitle, IonCardContent, IonIcon, 
-    IonButtons, IonBackButton, IonSpinner, IonLabel,
-    IonList, IonChip, IonText, IonCardSubtitle, // ✅ AÑADIDO
+    IonSpinner, IonLabel,
+    IonChip, IonText, IonCardSubtitle,
     FormsModule,
     CommonModule
   ]
@@ -36,8 +37,15 @@ export class StoreLocatorPage {
   showResults: boolean = false;
   selectedProduct: Product | null = null;
 
-  constructor(private productsService: ProductsService) {
+  constructor(
+    private productsService: ProductsService,
+    private navigationService: NavigationService
+  ) {
     addIcons({ search, location, navigate, storefront, arrowBack });
+  }
+
+  goBack() {
+    this.navigationService.back('/home');
   }
 
 

@@ -6,6 +6,7 @@ import {
 import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { download, logoGooglePlaystore } from 'ionicons/icons';
+import { NavigationService } from '../services/navigation.service';
 
 @Component({
   selector: 'app-app-download',
@@ -32,8 +33,12 @@ export class AppDownloadPage {
     playStore: 'assets/qr/QR.png'
   };
 
-  constructor() {
+  constructor(private navigationService: NavigationService) {
     addIcons({ download, logoGooglePlaystore });
+  }
+
+  goBack() {
+    this.navigationService.back('/home');
   }
 
   downloadDirect() {

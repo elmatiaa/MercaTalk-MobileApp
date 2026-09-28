@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
-  IonHeader, IonContent, IonButton, IonIcon, ToastController
+  IonHeader, IonContent, IonIcon, ToastController
 } from '@ionic/angular/standalone';
 import { RouterModule, Router } from '@angular/router';
 import { addIcons } from 'ionicons';
@@ -11,6 +11,7 @@ import {
 } from 'ionicons/icons';
 import { WALMART_RECIPES } from '../data/recipes.data';
 import { ProductsService } from '../services/products';
+import { NavigationService } from '../services/navigation.service';
 
 @Component({
   selector: 'app-recipes',
@@ -21,7 +22,7 @@ import { ProductsService } from '../services/products';
     CommonModule,
     RouterModule,
     IonHeader, IonContent,
-    IonButton, IonIcon
+    IonIcon
   ]
 })
 export class RecipesPage {
@@ -32,7 +33,8 @@ export class RecipesPage {
   constructor(
     private router: Router,
     private toastController: ToastController,
-    private productsService: ProductsService
+    private productsService: ProductsService,
+    private navigationService: NavigationService
   ) {
     addIcons({
       'arrow-back-outline': arrowBackOutline,
@@ -118,12 +120,16 @@ export class RecipesPage {
           role: 'info',
           handler: () => {
             this.closeRecipeModal();
-            this.router.navigate(['/presupuesto']);
+            this.router.navigate(['/presupuesto'], { queryParams: { from: 'recipes' } });
           }
         }
       ]
     });
     await toast.present();
     this.closeRecipeModal();
+  }
+
+  goBack() {
+    this.navigationService.back('/home');
   }
 }

@@ -24,8 +24,9 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { ProductsService, Product } from '../services/products';
 import { ChatService } from '../services/chat.service';
 import { WALMART_RECIPES } from '../data/recipes.data';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { SupermarketService, Supermarket } from '../services/supermarket.service';
+import { NavigationService } from '../services/navigation.service';
 
 Chart.register(...registerables);
 
@@ -140,6 +141,8 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     private toastController: ToastController,
     private alertController: AlertController,
     private route: ActivatedRoute,
+    private router: Router,
+    private navigationService: NavigationService,
     public supermarketService: SupermarketService
   ) {
     addIcons({ 
@@ -195,6 +198,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   showPitchExecutiveModal: boolean = false;
+  fromRoute: string | null = null;
 
   ngOnInit() {
     this.supermarketService.currentSupermarket$.subscribe(s => {
@@ -205,6 +209,9 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     this.initSpeechRecognition();
 
     this.route.queryParams.subscribe(params => {
+      if (params['from']) {
+        this.fromRoute = params['from'];
+      }
       if (params['index'] !== undefined) {
         this.editIndex = parseInt(params['index'], 10);
         this.loadBudget(this.editIndex);
@@ -212,6 +219,19 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
         this.loadDemoPitchData();
       }
     });
+  }
+
+  /**
+   * Navegación hacia atrás respetando el historial real y el origen contextual.
+   */
+  goBack() {
+    if (this.navigationService.hasHistory()) {
+      this.navigationService.back(this.fromRoute ? '/' + this.fromRoute : '/home');
+    } else if (this.fromRoute) {
+      this.router.navigate(['/' + this.fromRoute]);
+    } else {
+      this.navigationService.back('/home');
+    }
   }
 
   ionViewDidEnter() {
