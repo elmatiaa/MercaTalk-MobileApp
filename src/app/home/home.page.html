@@ -179,17 +179,6 @@
         <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
       </div>
       
-      <div class="grid-card" (click)="navigateToStoreLocator()" style="display: none;">
-        <div class="icon-wrapper green">
-          <ion-icon name="map"></ion-icon>
-        </div>
-        <div class="card-text">
-          <h3>Dónde Encontrar</h3>
-          <p>Pasillos y estantes del supermercado</p>
-        </div>
-        <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
-      </div>
-      
       <div class="grid-card" (click)="navigateToOffers()">
         <div class="icon-wrapper red">
           <ion-icon name="pricetags"></ion-icon>
@@ -208,6 +197,20 @@
         <div class="card-text">
           <h3>Recetas con Ofertas</h3>
           <p>Cocina rico y ahorra con productos en oferta</p>
+        </div>
+        <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+      </div>
+
+      <div class="grid-card" (click)="navigateToMisListas()">
+        <div class="icon-wrapper green">
+          <ion-icon name="list-outline"></ion-icon>
+        </div>
+        <div class="card-text">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h3>Mis Listas</h3>
+            <span class="grid-count-badge" *ngIf="savedListsCount > 0">{{ savedListsCount }}</span>
+          </div>
+          <p>Presupuestos guardados y compras previas</p>
         </div>
         <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
       </div>

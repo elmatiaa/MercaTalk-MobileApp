@@ -540,6 +540,18 @@ ion-content {
       color: #1e293b;
     }
 
+    .grid-count-badge {
+      background: var(--primary-brand, #0071ce);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 1px 7px;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
+      line-height: 16px;
+    }
+
     p {
       margin: 0;
       font-size: 12px;
