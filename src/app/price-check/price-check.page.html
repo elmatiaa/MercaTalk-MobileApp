@@ -205,50 +205,112 @@
   </div>
 </ion-content>
 
-<!-- Modo cámara (oculto por defecto) -->
-<div class="camera-mode" *ngIf="isScanning">
-  
-  <!-- Vista de la cámara -->
-  <video #videoElement class="camera-view" autoplay playsinline></video>
-  <canvas #canvasElement class="hidden-canvas"></canvas>
-  
-  <!-- Overlay del escáner -->
-  <div class="scanner-overlay">
+<!-- ESCÁNER CONTINUO MULTI-PRODUCTO (MODERNO) -->
+<div class="scanner-container" *ngIf="isScanning">
+  <!-- Barra Superior del Escáner con botón Cancelar -->
+  <div class="scanner-top-bar">
+    <div class="scanner-mode-badge">
+      <span class="live-pulse"></span>
+      <span>Escaneo Continuo Activo</span>
+    </div>
+    <button class="scanner-cancel-btn" (click)="cancelScanning()" title="Cancelar y salir">
+      <ion-icon name="close"></ion-icon>
+      <span>Cancelar</span>
+    </button>
+  </div>
+
+  <!-- Banner flotante de feedback en vivo (último producto detectado) -->
+  <div class="live-scan-hud-banner" *ngIf="lastScannedProduct" [class.unidentified]="!lastScannedProduct.identified">
+    <ion-icon [name]="lastScannedProduct.identified ? 'checkmark-circle' : 'alert-circle-outline'" class="success-icon"></ion-icon>
+    <div class="hud-product-info">
+      <strong>{{ lastScannedProduct.name }}</strong>
+      <span *ngIf="lastScannedProduct.identified">${{ lastScannedProduct.price | number }} {{ lastScannedProduct.inOffer ? '(En Oferta)' : '' }} • Cant: {{ lastScannedProduct.quantity }}</span>
+      <span *ngIf="!lastScannedProduct.identified" class="unrec-sub">⚠️ No identificado en catálogo. Puedes continuar escaneando.</span>
+    </div>
+  </div>
+
+  <!-- Contenedor para cámara Web -->
+  <div id="price-check-reader" *ngIf="isWeb" class="web-scanner-box"></div>
+
+  <!-- Visor Nativo -->
+  <div class="scanner-overlay" *ngIf="!isWeb">
     <div class="scanner-frame">
       <div class="scanning-laser"></div>
-      <!-- Esquinas del frame -->
       <div class="corner top-left"></div>
       <div class="corner top-right"></div>
       <div class="corner bottom-left"></div>
       <div class="corner bottom-right"></div>
-      <div class="scanning-text">Escaneando código de barras...</div>
+      <div class="scanning-text">Apunta a los códigos de barra</div>
     </div>
   </div>
 
-  <!-- Instrucciones -->
-  <div class="scanner-instructions">
-    <div class="instruction-item">
-      <ion-icon name="videocam-outline"></ion-icon>
-      <span>Enfoca el código de barras dentro del marco</span>
+  <!-- BANDEJA DE PRODUCTOS DETECTADOS EN TIEMPO REAL -->
+  <div class="temp-detected-tray">
+    <div class="tray-header">
+      <div class="tray-title">
+        <ion-icon name="cart-outline"></ion-icon>
+        <strong>Detectados ({{ getTempScannedCount() }})</strong>
+      </div>
+      <div class="tray-total" *ngIf="tempScannedItems.length > 0">
+        Subtotal: <strong>${{ getTempScannedTotal() | number }}</strong>
+      </div>
     </div>
-    <div class="instruction-item">
-      <ion-icon name="sunny-outline"></ion-icon>
-      <span>Asegúrate de tener buena iluminación</span>
-    </div>
-    <div class="instruction-item">
-      <ion-icon name="hand-left-outline"></ion-icon>
-      <span>Mantén el dispositivo estable</span>
-    </div>
-  </div>
 
-  <!-- Controles de la cámara -->
-  <div class="scanner-controls">
-    <ion-button 
-      expand="block" 
-      class="cancel-button"
-      (click)="stopScanner(false)">
-      <ion-icon name="close-circle-outline" slot="start"></ion-icon>
-      Cancelar Escaneo
-    </ion-button>
+    <!-- Lista scrollable de items detectados -->
+    <div class="temp-items-list" *ngIf="tempScannedItems.length > 0">
+      <div class="temp-item-card" *ngFor="let item of tempScannedItems; let i = index" [class.item-unidentified]="!item.identified">
+        <div class="temp-item-thumb">
+          <img [src]="item.image || 'assets/icon/favicon.png'" *ngIf="item.identified && item.image" (error)="handleImageError($event)" [alt]="item.name">
+          <ion-icon name="alert-circle-outline" *ngIf="!item.identified"></ion-icon>
+          <ion-icon name="barcode-outline" *ngIf="item.identified && !item.image"></ion-icon>
+        </div>
+
+        <div class="temp-item-info">
+          <div class="temp-item-name">{{ item.name }}</div>
+          <div class="temp-item-meta">
+            <span class="temp-price" *ngIf="item.identified">${{ ((item.inOffer && item.offerPrice) ? item.offerPrice : item.price) | number }}</span>
+            <span class="unrec-badge" *ngIf="!item.identified">⚠️ No identificado</span>
+            <span class="temp-brand" *ngIf="item.brand">{{ item.brand }}</span>
+          </div>
+        </div>
+
+        <!-- Controles de cantidad en escáner -->
+        <div class="temp-qty-controls">
+          <button class="qty-btn" (click)="decreaseTempQuantity(i)" [title]="item.quantity === 1 ? 'Quitar' : 'Disminuir'">
+            <ion-icon [name]="item.quantity === 1 ? 'trash-outline' : 'remove-circle-outline'"></ion-icon>
+          </button>
+          <span class="qty-display">{{ item.quantity }}</span>
+          <button class="qty-btn" (click)="increaseTempQuantity(i)" title="Aumentar">
+            <ion-icon name="add-circle-outline"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Botón borrar individual -->
+        <button class="temp-delete-btn" (click)="removeTempItem(i)" title="Eliminar de detectados">
+          <ion-icon name="close"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Estado vacío de la bandeja -->
+    <div class="temp-items-empty" *ngIf="tempScannedItems.length === 0">
+      <ion-icon name="barcode-outline"></ion-icon>
+      <span>Apunta la cámara a los códigos de barra. Se irán agregando aquí automáticamente.</span>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="tray-actions-row">
+      <button class="tray-cancel-btn" (click)="cancelScanning()">
+        Cancelar
+      </button>
+      <button 
+        class="tray-confirm-btn" 
+        (click)="confirmScannedProducts()" 
+        [disabled]="tempScannedItems.length === 0"
+        [style.background]="tempScannedItems.length > 0 ? 'var(--hero-gradient, linear-gradient(135deg, #0071ce 0%, #0056b3 100%))' : '#94a3b8'">
+        <ion-icon name="checkmark-circle"></ion-icon>
+        <span>Consultar productos ({{ getTempScannedCount() }})</span>
+      </button>
+    </div>
   </div>
 </div>
