@@ -106,9 +106,14 @@
         <!-- Desglose de Productos Expandible -->
         <div class="expanded-items-box" *ngIf="expandedIndex === i">
           <div class="mini-product-row" *ngFor="let it of b.items">
-            <span class="p-qty">{{ it.quantity || 1 }}x</span>
-            <span class="p-name">{{ it.name }}</span>
-            <span class="p-price">${{ ((it.inOffer && it.offerPrice ? it.offerPrice : it.price) * (it.quantity || 1)) | number }}</span>
+            <div class="mini-product-left">
+              <span class="p-qty">{{ it.quantity || 1 }}x</span>
+              <span class="p-name" [title]="it.name">{{ it.name }}</span>
+            </div>
+            <div class="mini-product-right">
+              <span class="p-offer-tag" *ngIf="it.inOffer">Oferta</span>
+              <span class="p-price">${{ ((it.inOffer && it.offerPrice ? it.offerPrice : it.price) * (it.quantity || 1)) | number }}</span>
+            </div>
           </div>
         </div>
       </div>
