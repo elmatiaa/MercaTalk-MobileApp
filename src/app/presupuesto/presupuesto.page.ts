@@ -1501,7 +1501,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   private saveQuickListToStorage() {
     const savedData = {
       name: this.currentBudgetName,
-      date: new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      date: new Date().toISOString(),
       budget: this.budget,
       totalSpent: this.totalSpent,
       totalSavingsAccumulated: this.totalSavingsAccumulated,

@@ -109,7 +109,21 @@ export class MisListasComponent implements OnInit {
   }
 
   
-    goToLiveBudget(index: number) {
+  formatDate(dateVal: any): string {
+    if (!dateVal) return '';
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) {
+      return String(dateVal);
+    }
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} • ${hours}:${mins}`;
+  }
+
+  goToLiveBudget(index: number) {
     this.router.navigate(['/presupuesto'], { queryParams: { index, from: 'mis-listas' } });
   }
 
