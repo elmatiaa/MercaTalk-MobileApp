@@ -228,11 +228,11 @@
         </div>
       </div>
       
-      <div class="tool-card pitch-tool" (click)="startPitchDemo()">
+      <div class="tool-card pitch-tool" (click)="openQuickListModal()">
         <ion-icon name="sparkles" class="tool-icon gold-text"></ion-icon>
         <div class="tool-content">
-          <h3>Modo Demo Pitch</h3>
-          <p>Simulación 1-clic con carro cargado para inversionistas</p>
+          <h3>Lista Rápida / Eventos</h3>
+          <p>Arma un carro instantáneo para comida familiar o cumpleaños</p>
         </div>
       </div>
 
@@ -256,6 +256,172 @@
     
     <!-- Espacio final para que el footer no tape el contenido -->
     <div style="height: 100px;"></div>
+  </div>
+
+  <!-- MODAL DE LISTA RÁPIDA / EVENTOS (SECCIÓN 1) -->
+  <div class="quick-list-modal-overlay notranslate" *ngIf="showQuickListModal" (click)="closeQuickListModal()">
+    <div class="quick-list-modal" (click)="$event.stopPropagation()">
+      
+      <!-- Header del Modal -->
+      <div class="quick-modal-header">
+        <div class="header-title-box">
+          <div class="header-icon-circle">
+            <ion-icon name="sparkles"></ion-icon>
+          </div>
+          <div>
+            <h3>Armar Lista Rápida</h3>
+            <span>Elige una ocasión para preparar tu carro al instante</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" (click)="closeQuickListModal()" aria-label="Cerrar">
+          <ion-icon name="close"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Opciones Principales de Ocasión -->
+      <div class="quick-options-grid">
+        <!-- Opción 1: Comida Familiar -->
+        <div 
+          class="quick-option-card" 
+          [class.selected]="selectedQuickOption === 'comida_familiar'"
+          (click)="selectQuickOption('comida_familiar')">
+          <div class="card-radio-badge">
+            <ion-icon [name]="selectedQuickOption === 'comida_familiar' ? 'checkmark-circle' : 'ellipse-outline'"></ion-icon>
+          </div>
+          <div class="option-icon-box family-bg">
+            <ion-icon name="people"></ion-icon>
+          </div>
+          <div class="option-info">
+            <h4>Comida Familiar</h4>
+            <p>Almuerzo o cena completa para compartir</p>
+          </div>
+        </div>
+
+        <!-- Opción 2: Evento Cumpleaños -->
+        <div 
+          class="quick-option-card" 
+          [class.selected]="selectedQuickOption === 'cumpleanos'"
+          (click)="selectQuickOption('cumpleanos')">
+          <div class="card-radio-badge">
+            <ion-icon [name]="selectedQuickOption === 'cumpleanos' ? 'checkmark-circle' : 'ellipse-outline'"></ion-icon>
+          </div>
+          <div class="option-icon-box bday-bg">
+            <ion-icon name="gift"></ion-icon>
+          </div>
+          <div class="option-info">
+            <h4>Evento Cumpleaños</h4>
+            <p>Celebración con torta, snacks y bebidas</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIGURACIÓN DINÁMICA: COMIDA FAMILIAR -->
+      <div class="config-panel" *ngIf="selectedQuickOption === 'comida_familiar'">
+        <div class="config-title">
+          <span>👨‍👩‍👧‍👦 ¿Para cuántas personas será la comida?</span>
+        </div>
+
+        <!-- Control de Personas (+ / -) -->
+        <div class="people-counter-box">
+          <button 
+            class="counter-btn" 
+            (click)="decreaseFamilyPeople()" 
+            [disabled]="familyPeopleCount <= 1"
+            aria-label="Restar persona">
+            <ion-icon name="remove"></ion-icon>
+          </button>
+
+          <div class="counter-display">
+            <span class="count-number">{{ familyPeopleCount }}</span>
+            <span class="count-label">{{ familyPeopleCount === 1 ? 'Persona' : 'Personas' }}</span>
+          </div>
+
+          <button 
+            class="counter-btn" 
+            (click)="increaseFamilyPeople()" 
+            [disabled]="familyPeopleCount >= 15"
+            aria-label="Sumar persona">
+            <ion-icon name="add"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Indicador Inteligente de Stock -->
+        <div class="stock-status-pill" [class.double]="isDoubleStock()">
+          <div class="pill-dot"></div>
+          <div class="pill-text" *ngIf="!isDoubleStock()">
+            <strong>Stock Básico (1 a 5 personas):</strong>
+            <span>Porciones estándar calculadas para almuerzo o cena familiar.</span>
+          </div>
+          <div class="pill-text" *ngIf="isDoubleStock()">
+            <strong>Stock Doble Activo (6 a 10+ personas):</strong>
+            <span>Cantidades e ingredientes duplicados automáticamente para abastecer a todos.</span>
+          </div>
+        </div>
+
+        <!-- Preview de categorías incluidas -->
+        <div class="preview-tags">
+          <span class="preview-tag">🥩 Carnes / Pollo</span>
+          <span class="preview-tag">🍚 Arroz / Guarnición</span>
+          <span class="preview-tag">🥗 Ensaladas y Verduras</span>
+          <span class="preview-tag">🥤 Bebida familiar</span>
+          <span class="preview-tag">🥖 Pan fresco</span>
+        </div>
+      </div>
+
+      <!-- CONFIGURACIÓN DINÁMICA: EVENTO CUMPLEAÑOS -->
+      <div class="config-panel" *ngIf="selectedQuickOption === 'cumpleanos'">
+        <div class="config-title">
+          <span>🎂 ¿Qué tipo de celebración es?</span>
+        </div>
+
+        <!-- Segmento Infantil vs Adulto -->
+        <div class="bday-selector-segment">
+          <button 
+            class="bday-seg-btn" 
+            [class.active]="birthdayType === 'infantil'"
+            (click)="selectBirthdayType('infantil')">
+            <span class="seg-icon">🎈</span>
+            <div class="seg-text">
+              <strong>Infantil</strong>
+              <span>Sin alcohol</span>
+            </div>
+          </button>
+
+          <button 
+            class="bday-seg-btn" 
+            [class.active]="birthdayType === 'adulto'"
+            (click)="selectBirthdayType('adulto')">
+            <span class="seg-icon">🍻</span>
+            <div class="seg-text">
+              <strong>Adulto</strong>
+              <span>Con alcohol disponible</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- Indicador de lo que incluye -->
+        <div class="bday-info-box" [class.adult]="birthdayType === 'adulto'">
+          <div *ngIf="birthdayType === 'infantil'">
+            <strong>🎉 Pack Cumpleaños Infantil:</strong>
+            <p>Jugos naturales, gaseosas, papas fritas, snacks dulces, galletas, torta de cumpleaños y vasos/platos descartables.</p>
+          </div>
+          <div *ngIf="birthdayType === 'adulto'">
+            <strong>🍾 Pack Cumpleaños Adulto:</strong>
+            <p>Cervezas y vinos seleccionados, gaseosas, hielo, tablas de queso y maní, snacks salados, torta y cotillón.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón de Confirmación / Proceder -->
+      <div class="quick-modal-footer">
+        <button class="generate-list-cta-btn" (click)="proceedToGenerateList()">
+          <ion-icon name="sparkles"></ion-icon>
+          <span>Armar Carro de {{ selectedQuickOption === 'comida_familiar' ? 'Comida Familiar' : 'Cumpleaños' }}</span>
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+      </div>
+
+    </div>
   </div>
 </ion-content>
 

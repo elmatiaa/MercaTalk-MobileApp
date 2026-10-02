@@ -14,7 +14,8 @@ import {
   informationCircle, calculator, cart, bagCheck,
   chevronDown, apps, map, pricetags, chatbubbleEllipses, checkmarkCircle, ellipsisHorizontal,
   scanOutline, cartOutline, pricetagOutline, qrCode, cube, chevronForward, listOutline,
-  arrowForwardOutline, barcodeOutline
+  arrowForwardOutline, barcodeOutline, people, gift, add, remove, wine, beer, close, checkmark,
+  ellipseOutline
 } from 'ionicons/icons';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -126,14 +127,72 @@ export class HomePage implements OnInit, OnDestroy {
       'chevron-forward': chevronForward,
       'list-outline': listOutline,
       'arrow-forward-outline': arrowForwardOutline,
-      'barcode-outline': barcodeOutline
+      'barcode-outline': barcodeOutline,
+      people,
+      gift,
+      add,
+      remove,
+      wine,
+      beer,
+      close,
+      checkmark,
+      'ellipse-outline': ellipseOutline
     });
   }
 
   savedListsCount = 0;
 
+  // FASE LISTA RÁPIDA / DEMO (SECCIÓN 1)
+  showQuickListModal: boolean = false;
+  selectedQuickOption: 'comida_familiar' | 'cumpleanos' = 'comida_familiar';
+  familyPeopleCount: number = 4;
+  birthdayType: 'infantil' | 'adulto' = 'infantil';
+
+  openQuickListModal() {
+    this.showQuickListModal = true;
+  }
+
+  closeQuickListModal() {
+    this.showQuickListModal = false;
+  }
+
+  selectQuickOption(option: 'comida_familiar' | 'cumpleanos') {
+    this.selectedQuickOption = option;
+  }
+
+  increaseFamilyPeople() {
+    if (this.familyPeopleCount < 15) {
+      this.familyPeopleCount++;
+    }
+  }
+
+  decreaseFamilyPeople() {
+    if (this.familyPeopleCount > 1) {
+      this.familyPeopleCount--;
+    }
+  }
+
+  isDoubleStock(): boolean {
+    return this.familyPeopleCount >= 6;
+  }
+
+  selectBirthdayType(type: 'infantil' | 'adulto') {
+    this.birthdayType = type;
+  }
+
   startPitchDemo() {
-    this.router.navigate(['/presupuesto'], { queryParams: { demoPitch: 'true' } });
+    this.openQuickListModal();
+  }
+
+  proceedToGenerateList() {
+    this.closeQuickListModal();
+    this.router.navigate(['/presupuesto'], { 
+      queryParams: { 
+        quickList: this.selectedQuickOption,
+        people: this.familyPeopleCount,
+        birthdayType: this.birthdayType
+      } 
+    });
   }
 
   ngOnInit() {
