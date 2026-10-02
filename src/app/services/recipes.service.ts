@@ -11,6 +11,7 @@ export interface Recipe {
   difficulty: string;
   time: string;
   ingredients: string[];
+  ingredientPrices?: number[];
   steps: string[];
   image: string;
   relatedProductId: number;

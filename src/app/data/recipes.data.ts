@@ -15,6 +15,14 @@ export const WALMART_RECIPES = [
       '1 cucharada de aceite',
       'Sal y pimienta al gusto'
     ],
+    ingredientPrices: [
+      2990,
+      1490,
+      890,
+      690,
+      1890,
+      590
+    ],
     steps: [
       'Rallar el queso mantecoso',
       'Calentar el aceite en un sartén',
@@ -41,6 +49,14 @@ export const WALMART_RECIPES = [
       'Aceite de oliva',
       'Limón y sal al gusto'
     ],
+    ingredientPrices: [
+      1350,
+      990,
+      890,
+      790,
+      3990,
+      690
+    ],
     steps: [
       'Lavar y picar la lechuga',
       'Mezclar con tomate y cebolla',
@@ -66,6 +82,13 @@ export const WALMART_RECIPES = [
       'Sal y pimienta al gusto',
       '¼ taza de aceite de oliva'
     ],
+    ingredientPrices: [
+      11190,
+      990,
+      790,
+      590,
+      3990
+    ],
     steps: [
       'Mezclar todos los ingredientes en un bowl',
       'Colocar la carne en la marinada',
@@ -89,6 +112,12 @@ export const WALMART_RECIPES = [
       '1 cucharadita de perejil picado',
       '1 diente de ajo machacado (opcional)'
     ],
+    ingredientPrices: [
+      1790,
+      2200,
+      690,
+      590
+    ],
     steps: [
       'Tostar el pan al gusto',
       'Mezclar la mantequilla con perejil y ajo',
@@ -111,6 +140,12 @@ export const WALMART_RECIPES = [
       '2 tazas de agua',
       '1 cucharadita de sal',
       '1 cucharada de aceite'
+    ],
+    ingredientPrices: [
+      1290,
+      490,
+      590,
+      1890
     ],
     steps: [
       'Lavar el arroz hasta que el agua salga clara',

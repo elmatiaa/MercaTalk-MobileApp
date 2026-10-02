@@ -34,6 +34,7 @@
             <div class="recipe-meta">
               <span>⏱️ {{ recipe.time }}</span>
               <span>🥗 {{ recipe.ingredients.length }} INGREDIENTES</span>
+              <span class="recipe-cost-badge">💰 ~${{ getRecipeEstimatedTotal(recipe).toLocaleString('es-CL') }}</span>
             </div>
             
             <div class="recipe-ingredient">
@@ -77,18 +78,26 @@
         <ion-icon name="cart-outline"></ion-icon>
         <div class="btn-text">
           <strong>Añadir {{ selectedRecipe.ingredients.length }} Ingredientes al Presupuesto</strong>
-          <span>Calcula automáticamente el total para tu visita</span>
+          <span>Total estimado: ${{ getRecipeEstimatedTotal(selectedRecipe).toLocaleString('es-CL') }} • Añadir al presupuesto</span>
         </div>
         <ion-icon name="chevron-forward-outline"></ion-icon>
       </button>
 
       <!-- Lista de Ingredientes -->
       <div class="recipe-section">
-        <h4><ion-icon name="list-outline"></ion-icon> Ingredientes Necesarios</h4>
+        <div class="section-header-row">
+          <h4><ion-icon name="list-outline"></ion-icon> Ingredientes Necesarios</h4>
+          <span class="total-estimated-tag">Total: ${{ getRecipeEstimatedTotal(selectedRecipe).toLocaleString('es-CL') }}</span>
+        </div>
         <div class="ingredients-list">
-          <div class="ingredient-row" *ngFor="let ing of selectedRecipe.ingredients">
-            <ion-icon name="checkmark-circle-outline"></ion-icon>
-            <span>{{ ing }}</span>
+          <div class="ingredient-row" *ngFor="let ing of selectedRecipe.ingredients; let idx = index">
+            <div class="ingredient-left">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              <span class="ingredient-name">{{ ing }}</span>
+            </div>
+            <div class="ingredient-price-badge">
+              ${{ getIngredientPrice(selectedRecipe, idx).toLocaleString('es-CL') }}
+            </div>
           </div>
         </div>
       </div>

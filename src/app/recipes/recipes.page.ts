@@ -58,6 +58,20 @@ export class RecipesPage {
     this.selectedRecipe = null;
   }
 
+  getIngredientPrice(recipe: any, index: number): number {
+    if (recipe && recipe.ingredientPrices && recipe.ingredientPrices[index] !== undefined) {
+      return recipe.ingredientPrices[index];
+    }
+    return 1200;
+  }
+
+  getRecipeEstimatedTotal(recipe: any): number {
+    if (!recipe || !recipe.ingredients) return 0;
+    return recipe.ingredients.reduce((total: number, _: any, idx: number) => {
+      return total + this.getIngredientPrice(recipe, idx);
+    }, 0);
+  }
+
   async addIngredientsToBudget(recipe: any) {
     // Obtener presupuesto activo o crear uno
     const saved = localStorage.getItem('liderin_budgets');
@@ -82,27 +96,29 @@ export class RecipesPage {
     }
 
     let addedCount = 0;
-    for (const ing of recipe.ingredients) {
+    for (let i = 0; i < recipe.ingredients.length; i++) {
+      const ing = recipe.ingredients[i];
+      const ingredientPrice = this.getIngredientPrice(recipe, i);
+
       // Buscar en el catálogo si existe un producto relacionado
       const matchedProduct = this.productsService.searchProducts(ing)[0];
       if (matchedProduct) {
-        const effectivePrice = (matchedProduct.inOffer && matchedProduct.offerPrice) ? matchedProduct.offerPrice : matchedProduct.price;
-        activeBudget.items.unshift({ ...matchedProduct, quantity: 1 });
+        const effectivePrice = (matchedProduct.inOffer && matchedProduct.offerPrice) ? matchedProduct.offerPrice : ingredientPrice;
+        activeBudget.items.unshift({ ...matchedProduct, price: effectivePrice, quantity: 1 });
         activeBudget.totalSpent += effectivePrice;
         addedCount++;
       } else {
-        // Crear un producto estimado
-        const estimatedPrice = 1200;
+        // Crear un producto con su precio exacto de ingrediente
         activeBudget.items.unshift({
           id: Date.now() + Math.random(),
           name: ing,
           brand: 'Receta',
           category: 'Abarrotes',
-          price: estimatedPrice,
+          price: ingredientPrice,
           quantity: 1,
           barcode: 'RECETA-' + Date.now()
         });
-        activeBudget.totalSpent += estimatedPrice;
+        activeBudget.totalSpent += ingredientPrice;
         addedCount++;
       }
     }
