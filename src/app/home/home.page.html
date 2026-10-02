@@ -254,12 +254,13 @@
       </div>
     </div>
     
-    <!-- Espacio final para que el footer no tape el contenido -->
-    <div style="height: 100px;"></div>
+    <!-- Espacio final limpio sin barra inferior -->
+    <div style="height: 24px;"></div>
   </div>
+</ion-content>
 
-  <!-- MODAL DE LISTA RÁPIDA / EVENTOS (SECCIÓN 1) -->
-  <div class="quick-list-modal-overlay notranslate" *ngIf="showQuickListModal" (click)="closeQuickListModal()">
+<!-- MODAL DE LISTA RÁPIDA / EVENTOS (SECCIÓN 1) -->
+<div class="quick-list-modal-overlay notranslate" *ngIf="showQuickListModal" (click)="closeQuickListModal()">
     <div class="quick-list-modal" (click)="$event.stopPropagation()">
       
       <!-- Header del Modal -->
@@ -423,33 +424,3 @@
 
     </div>
   </div>
-</ion-content>
-
-<!-- Bottom Tab Bar Simulado (Fijo al fondo) -->
-<div class="custom-tab-bar">
-  <div class="tab-btn active">
-    <div class="tab-supermarket-wrapper" [style.border-color]="currentSupermarket.colors.primary">
-      <img [src]="currentSupermarket.logo" class="tab-supermarket-logo" [alt]="currentSupermarket.name">
-    </div>
-    <span>{{ currentSupermarket.name }}</span>
-  </div>
-  <div class="tab-btn highlight-tab" (click)="navigateToPresupuesto()">
-    <div class="highlight-circle">
-      <ion-icon name="barcode-outline"></ion-icon>
-    </div>
-    <span>Presupuesto</span>
-  </div>
-  <div class="tab-btn" (click)="navigateToMisListas()">
-    <ion-icon name="list-outline"></ion-icon>
-    <span>Mis listas</span>
-    <ion-badge color="primary" class="cart-badge" *ngIf="savedListsCount > 0">{{ savedListsCount }}</ion-badge>
-  </div>
-  <div class="tab-btn" (click)="navigateToOffers()" style="display: none;">
-    <ion-icon name="pricetag-outline"></ion-icon>
-    <span>Ofertas</span>
-  </div>
-  <div class="tab-btn" style="display: none;">
-    <ion-icon name="ellipsis-horizontal"></ion-icon>
-    <span>Más</span>
-  </div>
-</div>
