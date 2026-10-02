@@ -84,6 +84,20 @@ export class RecipesPage {
       }
     }
 
+    // Limpiar checklist de demostración residual si existiese en el dispositivo
+    const existingChecklist = localStorage.getItem('liderin_planned_checklist');
+    if (existingChecklist) {
+      try {
+        const parsed = JSON.parse(existingChecklist);
+        if (Array.isArray(parsed) && parsed.some((p: any) => 
+          p.id === 'p1' || p.id === 'p2' || p.id === 'p3' || p.id === 'p4' || p.id === 'p5' ||
+          (p.id === '1' && p.name === 'Leche')
+        )) {
+          localStorage.removeItem('liderin_planned_checklist');
+        }
+      } catch (e) {}
+    }
+
     let activeBudget = budgetsArray[0];
     if (!activeBudget) {
       activeBudget = {
@@ -91,12 +105,20 @@ export class RecipesPage {
         date: new Date().toISOString(),
         budget: 20000,
         totalSpent: 0,
-        items: []
+        items: [],
+        plannedItems: []
       };
       budgetsArray.unshift(activeBudget);
-    } else if (!activeBudget.name) {
-      activeBudget.name = `Receta: ${recipe.name}`;
+    } else {
+      if (!activeBudget.name) {
+        activeBudget.name = `Receta: ${recipe.name}`;
+      }
+      if (!activeBudget.plannedItems) {
+        activeBudget.plannedItems = [];
+      }
     }
+    // Sincronizar checklist limpio para este presupuesto
+    localStorage.setItem('liderin_planned_checklist', JSON.stringify(activeBudget.plannedItems || []));
 
     let addedCount = 0;
     for (let i = 0; i < recipe.ingredients.length; i++) {

@@ -276,9 +276,13 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
         this.currentBudgetName = data.name || '';
         this.budget = data.budget;
         this.totalSpent = data.totalSpent;
-        this.scannedItems = data.items;
+        this.scannedItems = data.items || [];
         this.totalSavingsAccumulated = data.totalSavingsAccumulated || 0;
         this.selectedCardDiscount = data.selectedCardDiscount || 'none';
+        this.plannedItems = (data.plannedItems && Array.isArray(data.plannedItems)) 
+          ? [...data.plannedItems] 
+          : [];
+        this.saveChecklist();
         if (this.chart) this.updateChart();
         this.syncChecklistWithItems();
       }
@@ -610,17 +614,27 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     const saved = localStorage.getItem('liderin_planned_checklist');
     if (saved) {
       try {
-        this.plannedItems = JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Detectar y purgar items mock/demo residuales (p1..p5 o dummy defaults)
+          const isLegacyDemo = parsed.some((p: any) => 
+            p.id === 'p1' || p.id === 'p2' || p.id === 'p3' || p.id === 'p4' || p.id === 'p5' ||
+            (p.id === '1' && p.name === 'Leche') || (p.id === '2' && p.name === 'Arroz')
+          );
+          if (isLegacyDemo && !this.route.snapshot.queryParams['demoPitch']) {
+            this.plannedItems = [];
+            this.saveChecklist();
+          } else {
+            this.plannedItems = parsed;
+          }
+        } else {
+          this.plannedItems = [];
+        }
       } catch (e) {
         this.plannedItems = [];
       }
     } else {
-      this.plannedItems = [
-        { id: '1', name: 'Leche', completed: false },
-        { id: '2', name: 'Arroz', completed: false },
-        { id: '3', name: 'Detergente', completed: false }
-      ];
-      this.saveChecklist();
+      this.plannedItems = [];
     }
   }
 
@@ -1267,7 +1281,8 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
               selectedCardDiscount: this.selectedCardDiscount,
               discountAmount: this.getDiscountAmount(),
               finalTotalToPay: this.getFinalTotalToPay(),
-              items: this.scannedItems
+              items: this.scannedItems,
+              plannedItems: this.plannedItems
             };
 
             const previousSaved = localStorage.getItem('liderin_budgets');

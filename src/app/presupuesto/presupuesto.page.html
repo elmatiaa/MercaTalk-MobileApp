@@ -80,6 +80,12 @@
           </button>
         </div>
       </div>
+
+      <div class="empty-planned-hint" *ngIf="plannedItems.length === 0">
+        <ion-icon name="checkbox-outline"></ion-icon>
+        <span>Tu lista planeada está vacía. ¡Escribe arriba los productos que necesitas comprar!</span>
+      </div>
+
       <div class="checklist-hint">
         💡 Los productos se tildan solos al escanearlos en la tienda.
       </div>
