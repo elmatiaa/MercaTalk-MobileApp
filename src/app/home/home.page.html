@@ -248,11 +248,11 @@
         </div>
       </div>
       
-      <div class="tool-card">
-        <ion-icon name="megaphone" class="tool-icon blue-text"></ion-icon>
+      <div class="tool-card map-tool" (click)="openStoreLocatorModal()">
+        <ion-icon name="location" class="tool-icon red-text"></ion-icon>
         <div class="tool-content">
-          <h3>Sugerencias y Avisos</h3>
-          <p>Canal rápido para reportar derrames o aseo</p>
+          <h3>Locales en tu Zona</h3>
+          <p>Sucursales {{ currentSupermarket?.name }} cercanas a ti</p>
         </div>
       </div>
     </div>
@@ -427,3 +427,74 @@
 
     </div>
   </div>
+
+<!-- MODAL LOCALES EN TU ZONA -->
+<div class="store-locator-overlay notranslate" *ngIf="showStoreLocatorModal" (click)="closeStoreLocatorModal()">
+  <div class="store-locator-modal" (click)="$event.stopPropagation()">
+
+    <!-- Header del Modal -->
+    <div class="slm-header">
+      <div class="slm-header-left">
+        <div class="slm-icon-circle" [style.background]="currentSupermarket?.colors?.primary + '22'" [style.color]="currentSupermarket?.colors?.primary">
+          <ion-icon name="location"></ion-icon>
+        </div>
+        <div>
+          <h3>Locales en tu Zona</h3>
+          <span>Sucursales <strong>{{ currentSupermarket?.name }}</strong> más cercanas</span>
+        </div>
+      </div>
+      <button class="slm-close-btn" (click)="closeStoreLocatorModal()" aria-label="Cerrar">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Mapa iframe con OpenStreetMap -->
+    <div class="slm-map-wrapper">
+      <iframe
+        [src]="storeLocatorMapUrl"
+        class="slm-map-iframe"
+        frameborder="0"
+        scrolling="no"
+        marginheight="0"
+        marginwidth="0"
+        title="Mapa de sucursales"
+        loading="lazy"
+        allowfullscreen>
+      </iframe>
+      <div class="slm-map-overlay-badge" [style.background]="currentSupermarket?.colors?.primary">
+        <ion-icon name="location"></ion-icon>
+        <span>{{ currentSupermarket?.name }} cerca de ti</span>
+      </div>
+    </div>
+
+    <!-- Lista de sucursales del supermercado activo -->
+    <div class="slm-branches-list">
+      <div class="slm-branches-title">
+        <ion-icon name="list-outline"></ion-icon>
+        <span>Sucursales principales</span>
+      </div>
+      <div class="slm-branch-item" *ngFor="let branch of currentStoreBranches">
+        <div class="branch-icon" [style.background]="currentSupermarket?.colors?.primary + '18'" [style.color]="currentSupermarket?.colors?.primary">
+          <ion-icon name="storefront-outline"></ion-icon>
+        </div>
+        <div class="branch-info">
+          <strong>{{ branch.name }}</strong>
+          <span>{{ branch.address }}</span>
+          <span class="branch-hours">🕒 {{ branch.hours }}</span>
+        </div>
+        <a [href]="branch.mapsUrl" target="_blank" class="branch-nav-btn" [style.color]="currentSupermarket?.colors?.primary">
+          <ion-icon name="navigate-outline"></ion-icon>
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer: botón abrir en Google Maps -->
+    <div class="slm-footer">
+      <a [href]="storeMapsSearchUrl" target="_blank" class="slm-open-maps-btn" [style.background]="currentSupermarket?.colors?.primary">
+        <ion-icon name="map-outline"></ion-icon>
+        Abrir en Google Maps
+      </a>
+    </div>
+
+  </div>
+</div>

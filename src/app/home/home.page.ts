@@ -15,8 +15,9 @@ import {
   chevronDown, apps, map, pricetags, chatbubbleEllipses, checkmarkCircle, ellipsisHorizontal,
   scanOutline, cartOutline, pricetagOutline, qrCode, cube, chevronForward, listOutline,
   arrowForwardOutline, barcodeOutline, people, gift, add, remove, wine, beer, close, checkmark,
-  ellipseOutline
+  ellipseOutline, storefrontOutline, navigateOutline, mapOutline
 } from 'ionicons/icons';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -88,7 +89,8 @@ export class HomePage implements OnInit, OnDestroy {
     private productsService: ProductsService,
     private recipesService: RecipesService,
     private offersService: OffersService,
-    public supermarketService: SupermarketService
+    public supermarketService: SupermarketService,
+    private sanitizer: DomSanitizer
   ) {
     addIcons({
       chatbubbles,
@@ -136,11 +138,63 @@ export class HomePage implements OnInit, OnDestroy {
       beer,
       close,
       checkmark,
-      'ellipse-outline': ellipseOutline
+      'ellipse-outline': ellipseOutline,
+      'storefront-outline': storefrontOutline,
+      'navigate-outline': navigateOutline,
+      'map-outline': mapOutline
     });
   }
 
   savedListsCount = 0;
+
+  // LOCALES EN TU ZONA
+  showStoreLocatorModal: boolean = false;
+  storeLocatorMapUrl: SafeResourceUrl = this.sanitizer.bypassSecurityTrustResourceUrl('');
+  storeMapsSearchUrl: string = '';
+  currentStoreBranches: Array<{name: string; address: string; hours: string; mapsUrl: string}> = [];
+
+  private readonly STORE_BRANCHES: Record<string, Array<{name: string; address: string; hours: string; mapsUrl: string}>> = {
+    lider: [
+      { name: 'Líder Maipú', address: 'Av. Pajaritos 3500, Maipú', hours: 'Lun-Dom 8:00–23:00', mapsUrl: 'https://maps.google.com/?q=Lider+Maipu+Pajaritos' },
+      { name: 'Líder Pudahuel', address: 'Av. Américo Vespucio 1660, Pudahuel', hours: 'Lun-Dom 8:00–23:00', mapsUrl: 'https://maps.google.com/?q=Lider+Pudahuel+Vespucio' },
+      { name: 'Líder Renca', address: 'Av. Jorge Alessandri 12100, Renca', hours: 'Lun-Dom 8:00–22:30', mapsUrl: 'https://maps.google.com/?q=Lider+Renca' },
+      { name: 'Líder Quilicura', address: 'Av. El Salto 3600, Quilicura', hours: 'Lun-Dom 8:00–23:00', mapsUrl: 'https://maps.google.com/?q=Lider+Quilicura' },
+      { name: 'Líder Belloto', address: 'Av. Chorrillos 30, Quilpué', hours: 'Lun-Dom 8:00–22:00', mapsUrl: 'https://maps.google.com/?q=Lider+Belloto+Quilpue' }
+    ],
+    tottus: [
+      { name: 'Tottus Parque Arauco', address: 'Av. Kennedy 5413, Las Condes', hours: 'Lun-Dom 10:00–22:00', mapsUrl: 'https://maps.google.com/?q=Tottus+Parque+Arauco' },
+      { name: 'Tottus Mall Plaza Vespucio', address: 'Av. Vicuña Mackenna 7110, La Florida', hours: 'Lun-Dom 10:00–22:00', mapsUrl: 'https://maps.google.com/?q=Tottus+Plaza+Vespucio' },
+      { name: 'Tottus Maipú', address: 'Av. Américo Vespucio 599, Maipú', hours: 'Lun-Dom 8:00–23:00', mapsUrl: 'https://maps.google.com/?q=Tottus+Maipu' },
+      { name: 'Tottus Quilicura', address: 'Av. Marta Colvin 5035, Quilicura', hours: 'Lun-Dom 8:00–23:00', mapsUrl: 'https://maps.google.com/?q=Tottus+Quilicura' },
+      { name: 'Tottus La Serena', address: 'Av. Francisco de Aguirre 285, La Serena', hours: 'Lun-Dom 8:00–22:30', mapsUrl: 'https://maps.google.com/?q=Tottus+La+Serena' }
+    ],
+    santaisabel: [
+      { name: 'Santa Isabel Ñuñoa', address: 'Av. Irarrázaval 2740, Ñuñoa', hours: 'Lun-Dom 7:30–23:00', mapsUrl: 'https://maps.google.com/?q=Santa+Isabel+Nunoa' },
+      { name: 'Santa Isabel Providencia', address: 'Av. Ricardo Lyon 2222, Providencia', hours: 'Lun-Dom 7:30–23:00', mapsUrl: 'https://maps.google.com/?q=Santa+Isabel+Providencia' },
+      { name: 'Santa Isabel Maipú', address: 'Av. 5 de Abril 3650, Maipú', hours: 'Lun-Dom 7:30–22:30', mapsUrl: 'https://maps.google.com/?q=Santa+Isabel+Maipu' },
+      { name: 'Santa Isabel San Miguel', address: 'Av. Departamental 3550, San Miguel', hours: 'Lun-Dom 7:30–23:00', mapsUrl: 'https://maps.google.com/?q=Santa+Isabel+San+Miguel' },
+      { name: 'Santa Isabel Estación Central', address: 'Av. Alameda 3450, Estación Central', hours: 'Lun-Dom 7:30–22:30', mapsUrl: 'https://maps.google.com/?q=Santa+Isabel+Estacion+Central' }
+    ]
+  };
+
+  openStoreLocatorModal() {
+    const id = this.currentSupermarket?.id || 'lider';
+    this.currentStoreBranches = this.STORE_BRANCHES[id] || [];
+
+    const searchQuery = encodeURIComponent(this.currentSupermarket?.name || 'Líder');
+    this.storeMapsSearchUrl = `https://www.google.com/maps/search/${searchQuery}/@-33.4489,-70.6693,12z`;
+
+    // Mapa OpenStreetMap centrado en Santiago, con query del supermercado activo
+    const osmQuery = encodeURIComponent(this.currentSupermarket?.name || 'Líder');
+    const rawUrl = `https://www.openstreetmap.org/export/embed.html?bbox=-70.7500%2C-33.5400%2C-70.5500%2C-33.3500&layer=mapnik&marker=-33.4489,-70.6693`;
+    this.storeLocatorMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(rawUrl);
+
+    this.showStoreLocatorModal = true;
+  }
+
+  closeStoreLocatorModal() {
+    this.showStoreLocatorModal = false;
+  }
 
   // FASE LISTA RÁPIDA / DEMO (SECCIÓN 1)
   showQuickListModal: boolean = false;

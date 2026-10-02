@@ -1,4 +1,4 @@
-import{a as g,f as d}from"./chunk-VUI2GRO6.js";import{g as m}from"./chunk-2R6CW7ES.js";var T="https://www.triskeledu.cl/litserver/literatus/api/",_={very_brief:"USER_CHAT_TEXT_VERY_BRIEF",brief:"USER_CHAT_TEXT_BRIEF",normal:"USER_CHAT_TEXT_NORMAL",complete:"USER_CHAT_TEXT_COMPLETE",very_complete:"USER_CHAT_TEXT_VERY_COMPLETE"},s=class t extends Error{constructor(r,h){super(r),this.statusCode=h,this.name="ApiError",Object.setPrototypeOf(this,t.prototype)}},y=(()=>{let r=class r{constructor(){this.liderinContext=`{
+import{a as g,f as d}from"./chunk-5WYEIGD3.js";import{g as m}from"./chunk-2R6CW7ES.js";var T="https://www.triskeledu.cl/litserver/literatus/api/",_={very_brief:"USER_CHAT_TEXT_VERY_BRIEF",brief:"USER_CHAT_TEXT_BRIEF",normal:"USER_CHAT_TEXT_NORMAL",complete:"USER_CHAT_TEXT_COMPLETE",very_complete:"USER_CHAT_TEXT_VERY_COMPLETE"},s=class t extends Error{constructor(r,h){super(r),this.statusCode=h,this.name="ApiError",Object.setPrototypeOf(this,t.prototype)}},y=(()=>{let r=class r{constructor(){this.liderinContext=`{
     "es": {
       "ASSISTANT_NAME": "LIDER\xCDN",
       "ASSISTANT_SEX": "Hombre",
