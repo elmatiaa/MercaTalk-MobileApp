@@ -92,6 +92,17 @@
     </div>
   </div>
 
+  <!-- LISTA RÁPIDA ACTIVA O NOMBRE DE PRESUPUESTO -->
+  <div class="active-list-badge-banner" *ngIf="currentBudgetName">
+    <div class="badge-content">
+      <ion-icon name="sparkles" class="badge-icon"></ion-icon>
+      <div class="badge-texts">
+        <span class="badge-tag">LISTA ACTIVA</span>
+        <strong class="badge-title">{{ currentBudgetName }}</strong>
+      </div>
+    </div>
+  </div>
+
   <!-- TARJETA CONFIGURAR LÍMITE DE PRESUPUESTO -->
   <div class="budget-card">
     <div class="card-header-flex">

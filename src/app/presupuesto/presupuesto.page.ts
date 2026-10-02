@@ -131,6 +131,7 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
     'Carnes': '#eb445a',
     'Limpieza': '#0cd1e8',
     'Frutas': '#10b981',
+    'Verduras': '#10b981',
     'Snacks': '#7044ff',
     'Otros': '#92949c'
   };
@@ -212,7 +213,11 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       if (params['from']) {
         this.fromRoute = params['from'];
       }
-      if (params['index'] !== undefined) {
+      if (params['quickList']) {
+        const people = parseInt(params['people'] || '4', 10);
+        const bdayType = params['birthdayType'] || 'infantil';
+        this.loadQuickListData(params['quickList'], people, bdayType);
+      } else if (params['index'] !== undefined) {
         this.editIndex = parseInt(params['index'], 10);
         this.loadBudget(this.editIndex);
       } else if (params['from'] === 'recipes') {
@@ -239,7 +244,9 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
 
   ionViewDidEnter() {
     const params = this.route.snapshot.queryParams;
-    if (params['index'] !== undefined) {
+    if (params['quickList']) {
+      // Lista rápida activa manejada por queryParams
+    } else if (params['index'] !== undefined) {
       this.editIndex = parseInt(params['index'], 10);
       this.loadBudget(this.editIndex);
     } else if (params['from'] === 'recipes') {
@@ -1310,6 +1317,213 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       ]
     });
     await alertPrompt.present();
+  }
+
+  // FASE LISTA RÁPIDA (Comida Familiar & Evento Cumpleaños)
+  loadQuickListData(type: string, people: number, bdayType: string) {
+    const demoCatalog = this.productsService.getAllProducts();
+    this.selectedCardDiscount = 'none';
+
+    if (type === 'comida_familiar') {
+      const safePeople = Math.max(1, people || 4);
+      const isDouble = safePeople >= 6;
+      const factor = isDouble ? 2 : 1;
+
+      this.currentBudgetName = `Comida Familiar (${safePeople} personas - Stock ${isDouble ? 'Doble ⚡' : 'Básico 🟢'})`;
+      this.budget = isDouble ? 35000 : 18000;
+
+      const pollo = demoCatalog.find(p => p.id === 18) || {
+        id: 18, name: 'Pechuga de Pollo', brand: 'Super Pollo', category: 'Carnes',
+        price: 4890, barcode: '7801234567909', image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400'
+      };
+      const fideos = demoCatalog.find(p => p.id === 6) || {
+        id: 6, name: 'Fideos Spaghetti Carozzi', brand: 'Carozzi', category: 'Abarrotes',
+        price: 890, inOffer: true, offerPrice: 890, barcode: '7801234567897', image: 'https://i5.walmartimages.cl/asr/d72fa23a-1bd4-4c1a-800e-3c4bb995e6be.a961ffb4d3f9fb70d27d61333b26ed33.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF'
+      };
+      const arroz = demoCatalog.find(p => p.id === 5) || {
+        id: 5, name: 'Arroz Grado 1 Tucapel', brand: 'Tucapel', category: 'Abarrotes',
+        price: 1850, barcode: '7801234567893', image: 'https://i5.walmartimages.cl/asr/8b6c9a3d-2840-43d9-8a23-e60a2b3cf0d0.0218ffb523bbd604e42ec9aa3cad404b.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF'
+      };
+      const tomates = demoCatalog.find(p => p.id === 17) || {
+        id: 17, name: 'Tomates Selección', brand: 'Nacional', category: 'Verduras',
+        price: 890, inOffer: true, offerPrice: 890, barcode: '7801234567908', image: 'https://images.unsplash.com/photo-1546470427-e212d0d553d4?w=400'
+      };
+      const bebida = demoCatalog.find(p => p.id === 9) || {
+        id: 9, name: 'Coca-Cola 2L', brand: 'Coca-Cola', category: 'Bebidas',
+        price: 2000, barcode: '7801234567900', image: 'https://i5.walmartimages.cl/asr/d52c8d32-8f11-46e3-a420-c30c41deca13.1822237075c0074d6db3071f8fcd6ba0.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF'
+      };
+      const pan = demoCatalog.find(p => p.id === 20) || {
+        id: 20, name: 'Pan Molde Blanco', brand: 'ideal', category: 'Panadería',
+        price: 1790, inOffer: true, offerPrice: 1790, barcode: '7801234567911', image: 'https://i5.walmartimages.cl/asr/dd0b79f5-1ad7-470a-a682-438089b061de.16f50bbe150c7dc2d3f6cfd9400b100e.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF'
+      };
+
+      this.scannedItems = [
+        { ...pollo, quantity: 1 * factor },
+        { ...fideos, quantity: 2 * factor },
+        { ...arroz, quantity: 1 * factor },
+        { ...tomates, quantity: 2 * factor },
+        { ...bebida, quantity: 1 * factor },
+        { ...pan, quantity: 1 * factor }
+      ];
+
+      this.plannedItems = [
+        { id: 'cf1', name: 'Pechuga de Pollo', completed: true },
+        { id: 'cf2', name: 'Fideos Spaghetti', completed: true },
+        { id: 'cf3', name: 'Arroz Grado 1', completed: true },
+        { id: 'cf4', name: 'Tomates', completed: true },
+        { id: 'cf5', name: 'Coca-Cola 2L', completed: true },
+        { id: 'cf6', name: 'Pan Molde', completed: true },
+        { id: 'cf7', name: 'Postre o Ensalada extra', completed: false }
+      ];
+
+      this.totalSavingsAccumulated = isDouble ? 1800 : 900;
+      this.recalculateTotalSpent();
+      this.saveChecklist();
+      this.updateChart();
+      this.saveQuickListToStorage();
+      this.presentToast(`🍽️ Comida Familiar cargada: ${safePeople} personas (${isDouble ? 'Stock Doble ⚡' : 'Stock Básico 🟢'})`);
+    } else {
+      // Evento Cumpleaños
+      if (bdayType === 'adulto') {
+        this.currentBudgetName = 'Cumpleaños Adulto (Con alcohol)';
+        this.budget = 55000;
+
+        const torta = {
+          id: 505, name: 'Torta Tres Leches 15p', brand: 'Líder Bakery', category: 'Panadería',
+          price: 13990, barcode: '7809988112235', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400'
+        };
+        const cerveza = {
+          id: 506, name: 'Six Pack Cerveza Corona 330cc', brand: 'Corona', category: 'Bebidas',
+          price: 6990, barcode: '7809988112236', image: 'https://images.unsplash.com/photo-1608270119853-4809930f37db?w=400'
+        };
+        const vino = {
+          id: 507, name: 'Vino Tinto Cabernet 750ml', brand: 'Casillero del Diablo', category: 'Bebidas',
+          price: 5490, barcode: '7809988112237', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400'
+        };
+        const bebida = demoCatalog.find(p => p.id === 9) || {
+          id: 9, name: 'Coca-Cola 2L', brand: 'Coca-Cola', category: 'Bebidas',
+          price: 2000, barcode: '7801234567900', image: 'https://i5.walmartimages.cl/asr/d52c8d32-8f11-46e3-a420-c30c41deca13.1822237075c0074d6db3071f8fcd6ba0.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF'
+        };
+        const hielo = {
+          id: 508, name: 'Bolsa Hielo Purificado 2kg', brand: 'Iglú', category: 'Otros',
+          price: 1590, barcode: '7809988112238', image: 'https://images.unsplash.com/photo-1558818498-28c1e002b655?w=400'
+        };
+        const mani = {
+          id: 509, name: 'Maní Salado & Frutos Secos 200g', brand: 'Marco Polo', category: 'Snacks',
+          price: 2290, barcode: '7809988112239', image: 'https://images.unsplash.com/photo-1536591375315-1988d672f539?w=400'
+        };
+        const papas = {
+          id: 502, name: 'Papas Fritas Lays Corte Americano 250g', brand: 'Lays', category: 'Snacks',
+          price: 1990, barcode: '7809988112232', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400'
+        };
+
+        this.scannedItems = [
+          { ...torta, quantity: 1 },
+          { ...cerveza, quantity: 2 },
+          { ...vino, quantity: 1 },
+          { ...bebida, quantity: 2 },
+          { ...hielo, quantity: 1 },
+          { ...mani, quantity: 2 },
+          { ...papas, quantity: 2 }
+        ];
+
+        this.plannedItems = [
+          { id: 'bda1', name: 'Torta de Cumpleaños', completed: true },
+          { id: 'bda2', name: 'Cervezas y Vino Tinto', completed: true },
+          { id: 'bda3', name: 'Bebidas y Hielo', completed: true },
+          { id: 'bda4', name: 'Picoteo y Snacks Salados', completed: true },
+          { id: 'bda5', name: 'Copas y Servilletas Cóctel', completed: false }
+        ];
+
+        this.totalSavingsAccumulated = 2200;
+        this.recalculateTotalSpent();
+        this.saveChecklist();
+        this.updateChart();
+        this.saveQuickListToStorage();
+        this.presentToast('🎉 Cumpleaños Adulto: Carrito con cervezas, vino y picoteo cargado');
+      } else {
+        // Infantil
+        this.currentBudgetName = 'Cumpleaños Infantil (Sin alcohol)';
+        this.budget = 35000;
+
+        const torta = {
+          id: 501, name: 'Torta Cumpleaños Selva Negra 15p', brand: 'Líder Bakery', category: 'Panadería',
+          price: 12990, barcode: '7809988112231', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400'
+        };
+        const bebidas = demoCatalog.find(p => p.id === 9) || {
+          id: 9, name: 'Coca-Cola 2L', brand: 'Coca-Cola', category: 'Bebidas',
+          price: 2000, barcode: '7801234567900', image: 'https://i5.walmartimages.cl/asr/d52c8d32-8f11-46e3-a420-c30c41deca13.1822237075c0074d6db3071f8fcd6ba0.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF'
+        };
+        const jugos = demoCatalog.find(p => p.id === 10) || {
+          id: 10, name: 'Jugo Naranja Andina 1.5L', brand: 'Andina', category: 'Bebidas',
+          price: 899, inOffer: true, offerPrice: 899, barcode: '7801234567901', image: 'https://i5.walmartimages.cl/asr/933b9bf8-dd99-4300-8715-220bca14f954.cb9ad23bd9cd4c470e2e72669049dd13.jpeg?null=&odnHeight=612&odnWidth=612&odnBg=FFFFFF'
+        };
+        const papas = {
+          id: 502, name: 'Papas Fritas Lays Corte Americano 250g', brand: 'Lays', category: 'Snacks',
+          price: 1990, barcode: '7809988112232', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400'
+        };
+        const galletas = {
+          id: 503, name: 'Pack Galletas Variadas Fiesta 300g', brand: 'Costa', category: 'Snacks',
+          price: 1490, barcode: '7809988112233', image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400'
+        };
+        const vasos = {
+          id: 504, name: 'Set Vasos y Platos Cumpleaños 20 uds', brand: 'PartyPack', category: 'Otros',
+          price: 2490, barcode: '7809988112234', image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400'
+        };
+
+        this.scannedItems = [
+          { ...torta, quantity: 1 },
+          { ...bebidas, quantity: 2 },
+          { ...jugos, quantity: 2 },
+          { ...papas, quantity: 2 },
+          { ...galletas, quantity: 2 },
+          { ...vasos, quantity: 1 }
+        ];
+
+        this.plannedItems = [
+          { id: 'bdi1', name: 'Torta Cumpleaños', completed: true },
+          { id: 'bdi2', name: 'Bebidas y Jugos', completed: true },
+          { id: 'bdi3', name: 'Papas Fritas y Snacks Dulces', completed: true },
+          { id: 'bdi4', name: 'Vasos y Platos Desechables', completed: true },
+          { id: 'bdi5', name: 'Velas y Globos', completed: false }
+        ];
+
+        this.totalSavingsAccumulated = 1500;
+        this.recalculateTotalSpent();
+        this.saveChecklist();
+        this.updateChart();
+        this.saveQuickListToStorage();
+        this.presentToast('🎂 Cumpleaños Infantil: Carrito sin alcohol cargado');
+      }
+    }
+  }
+
+  private saveQuickListToStorage() {
+    const savedData = {
+      name: this.currentBudgetName,
+      date: new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      budget: this.budget,
+      totalSpent: this.totalSpent,
+      totalSavingsAccumulated: this.totalSavingsAccumulated,
+      selectedCardDiscount: this.selectedCardDiscount,
+      discountAmount: this.getDiscountAmount(),
+      finalTotalToPay: this.getFinalTotalToPay(),
+      items: this.scannedItems,
+      plannedItems: this.plannedItems
+    };
+
+    const previousSaved = localStorage.getItem('liderin_budgets');
+    let budgetsArray = [];
+    if (previousSaved) {
+      try {
+        budgetsArray = JSON.parse(previousSaved);
+      } catch (e) {
+        budgetsArray = [];
+      }
+    }
+    budgetsArray.unshift(savedData);
+    localStorage.setItem('liderin_budgets', JSON.stringify(budgetsArray));
+    this.editIndex = 0;
   }
 
   // FASE 5: DEMO PITCH MODE (Simulación para Ingenieros Comerciales e Inversionistas)
