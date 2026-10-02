@@ -87,12 +87,15 @@ export class RecipesPage {
     let activeBudget = budgetsArray[0];
     if (!activeBudget) {
       activeBudget = {
+        name: `Receta: ${recipe.name}`,
         date: new Date().toISOString(),
         budget: 20000,
         totalSpent: 0,
         items: []
       };
       budgetsArray.unshift(activeBudget);
+    } else if (!activeBudget.name) {
+      activeBudget.name = `Receta: ${recipe.name}`;
     }
 
     let addedCount = 0;
@@ -136,7 +139,7 @@ export class RecipesPage {
           role: 'info',
           handler: () => {
             this.closeRecipeModal();
-            this.router.navigate(['/presupuesto'], { queryParams: { from: 'recipes' } });
+            this.router.navigate(['/presupuesto'], { queryParams: { index: 0, from: 'recipes' } });
           }
         }
       ]

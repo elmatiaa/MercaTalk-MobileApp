@@ -215,6 +215,9 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
       if (params['index'] !== undefined) {
         this.editIndex = parseInt(params['index'], 10);
         this.loadBudget(this.editIndex);
+      } else if (params['from'] === 'recipes') {
+        this.editIndex = 0;
+        this.loadBudget(0);
       } else if (params['demoPitch'] === 'true') {
         this.loadDemoPitchData();
       }
@@ -235,6 +238,17 @@ export class PresupuestoPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ionViewDidEnter() {
+    const params = this.route.snapshot.queryParams;
+    if (params['index'] !== undefined) {
+      this.editIndex = parseInt(params['index'], 10);
+      this.loadBudget(this.editIndex);
+    } else if (params['from'] === 'recipes') {
+      this.editIndex = 0;
+      this.loadBudget(0);
+    } else if (this.editIndex !== undefined && this.editIndex !== null) {
+      this.loadBudget(this.editIndex);
+    }
+
     if (this.chart) {
       this.chart.destroy();
       this.chart = null;
